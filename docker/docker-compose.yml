@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  pollution-extraction:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../data:/app/data
+      - ../output:/app/output
+    environment:
+      - PYTHONPATH=/app

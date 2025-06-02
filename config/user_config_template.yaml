@@ -1,0 +1,14 @@
+# User configuration template
+# Copy this file and modify as needed
+
+data:
+  input_path: "your/data/path/"
+  output_path: "your/output/path/"
+  
+analysis:
+  pollutants: ["PM2.5"]  # Specify pollutants to analyze
+  temporal_resolution: "daily"  # daily, weekly, monthly
+  
+visualization:
+  map_style: "OpenStreetMap"  # Map background style
+  color_scheme: "viridis"  # Color scheme for plots

@@ -1,0 +1,9 @@
+# Docker-specific dependencies
+numpy
+pandas
+xarray
+netcdf4
+matplotlib
+geopandas
+shapely
+rasterio

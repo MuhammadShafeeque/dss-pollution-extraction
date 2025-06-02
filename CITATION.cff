@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: DSS Pollution Extraction
+authors:
+  - family-names: MuhammadShafeeque
+    given-names: Muhammad
+    orcid: https://orcid.org/0000-0000-0000-0000
+date-released: 2025-06-02
+version: 0.1.0
+license: MIT
+message: "If you use this software, please cite it as below."

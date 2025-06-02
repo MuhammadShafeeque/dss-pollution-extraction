@@ -1,0 +1,15 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include CITATION.cff
+include requirements*.txt
+include tox.ini
+recursive-include pollution_extraction *.py
+recursive-include config *.yaml *.json
+recursive-include examples *.py *.ipynb *.nc *.csv *.geojson
+recursive-include tests *.py *.nc
+recursive-include docs *.rst *.py *.txt Makefile
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
