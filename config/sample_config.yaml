@@ -2,11 +2,11 @@
 data:
   input_path: "data/"
   output_path: "output/"
-  
+
 analysis:
   pollutants: ["PM2.5", "NO2", "O3"]
   temporal_resolution: "daily"
-  
+
 visualization:
   map_style: "OpenStreetMap"
   color_scheme: "viridis"

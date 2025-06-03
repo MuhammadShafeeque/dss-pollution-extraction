@@ -1,15 +1,13 @@
-"""
-Command-line interface for DSS pollution data analysis.
-"""
+"""Command-line interface for DSS pollution data analysis."""
 
 import argparse
+import logging
 import sys
 from pathlib import Path
-from typing import Optional, List
-import logging
+
+import pandas as pd
 
 from .analyzer import PollutionAnalyzer
-from .config import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -23,22 +21,22 @@ def setup_cli_parser():
 Examples:
   # Basic analysis
   dss-pollution-analyze data.nc --type pm25 --info
-  
+
   # Generate time series plot
   dss-pollution-analyze data.nc --type no2 --plot timeseries --output plots/
-  
+
   # Export annual average to GeoTIFF
   dss-pollution-analyze data.nc --type pm25 --export geotiff --time-range 2010-01-01 2010-12-31 --output results/
-  
+
   # Comprehensive analysis
   dss-pollution-analyze data.nc --type bc --comprehensive --regions regions.shp --output analysis/
-  
+
   # Extract data at points
   dss-pollution-analyze data.nc --type no2 --extract points --locations points.csv --output extracted/
 
   # Monthly aggregation for summer months
   dss-pollution-analyze data.nc --type pm25 --monthly --months 6 7 8 --output summer_analysis/
-  
+
   # Batch processing multiple files
   dss-pollution-analyze data_*.nc --type pm10 --annual --output batch_results/
         """,
@@ -497,7 +495,7 @@ def handle_health_analysis(analyzer: PollutionAnalyzer, args: argparse.Namespace
     if "who_annual" in thresholds:
         who_exceed = (annual_mean > thresholds["who_annual"]).sum().values
         total_cells = annual_mean.size
-        print(f"\nWHO Guideline Exceedances:")
+        print("\nWHO Guideline Exceedances:")
         print(
             f"  {who_exceed}/{total_cells} grid cells ({100 * who_exceed / total_cells:.1f}%)"
         )
@@ -506,7 +504,7 @@ def handle_health_analysis(analyzer: PollutionAnalyzer, args: argparse.Namespace
     if "eu_annual" in thresholds:
         eu_exceed = (annual_mean > thresholds["eu_annual"]).sum().values
         total_cells = annual_mean.size
-        print(f"EU Limit Exceedances:")
+        print("EU Limit Exceedances:")
         print(
             f"  {eu_exceed}/{total_cells} grid cells ({100 * eu_exceed / total_cells:.1f}%)"
         )
@@ -638,7 +636,7 @@ def main():
         from .config import UserConfig
 
         try:
-            config = UserConfig(args.config)
+            UserConfig(args.config)
             print(f"Loaded configuration from: {args.config}")
         except Exception as e:
             print(f"Warning: Could not load configuration: {e}")

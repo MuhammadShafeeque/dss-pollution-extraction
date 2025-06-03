@@ -1,23 +1,19 @@
-"""
-Utility functions for pollution data analysis.
-"""
+"""Utility functions for pollution data analysis."""
 
-import pandas as pd
-import numpy as np
-import xarray as xr
-from pathlib import Path
-from typing import Union, List, Dict, Tuple, Optional
-import warnings
 import logging
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 
 def validate_date_range(
     start_date: str, end_date: str
-) -> Tuple[pd.Timestamp, pd.Timestamp]:
-    """
-    Validate and parse date range.
+) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """Validate and parse date range.
 
     Parameters
     ----------
@@ -26,12 +22,12 @@ def validate_date_range(
     end_date : str
         End date string
 
-    Returns
+    Returns:
     -------
     tuple
         Tuple of parsed start and end dates
 
-    Raises
+    Raises:
     ------
     ValueError
         If dates are invalid or start_date > end_date
@@ -53,11 +49,10 @@ def validate_date_range(
 def validate_coordinates(
     x: float,
     y: float,
-    x_bounds: Optional[Tuple[float, float]] = None,
-    y_bounds: Optional[Tuple[float, float]] = None,
+    x_bounds: tuple[float, float] | None = None,
+    y_bounds: tuple[float, float] | None = None,
 ) -> bool:
-    """
-    Validate coordinate values.
+    """Validate coordinate values.
 
     Parameters
     ----------
@@ -66,7 +61,7 @@ def validate_coordinates(
     x_bounds, y_bounds : tuple, optional
         Valid coordinate bounds
 
-    Returns
+    Returns:
     -------
     bool
         True if coordinates are valid
@@ -84,15 +79,14 @@ def validate_coordinates(
 
 
 def get_season_from_month(month: int) -> str:
-    """
-    Get season from month number.
+    """Get season from month number.
 
     Parameters
     ----------
     month : int
         Month number (1-12)
 
-    Returns
+    Returns:
     -------
     str
         Season name
@@ -115,10 +109,9 @@ def get_season_from_month(month: int) -> str:
 
 
 def calculate_statistics(
-    data: np.ndarray, percentiles: List[float] = [25, 50, 75, 90, 95, 99]
-) -> Dict[str, float]:
-    """
-    Calculate comprehensive statistics for data array.
+    data: np.ndarray, percentiles: list[float] | None = None
+) -> dict[str, float]:
+    """Calculate comprehensive statistics for data array.
 
     Parameters
     ----------
@@ -127,12 +120,14 @@ def calculate_statistics(
     percentiles : list of float
         Percentiles to calculate
 
-    Returns
+    Returns:
     -------
     dict
         Dictionary of statistics
     """
     # Remove NaN values
+    if percentiles is None:
+        percentiles = [25, 50, 75, 90, 95, 99]
     clean_data = data[~np.isnan(data)]
 
     if len(clean_data) == 0:
@@ -162,8 +157,7 @@ def calculate_statistics(
 def detect_outliers(
     data: np.ndarray, method: str = "iqr", threshold: float = 1.5
 ) -> np.ndarray:
-    """
-    Detect outliers in data using various methods.
+    """Detect outliers in data using various methods.
 
     Parameters
     ----------
@@ -174,7 +168,7 @@ def detect_outliers(
     threshold : float
         Threshold for outlier detection
 
-    Returns
+    Returns:
     -------
     np.ndarray
         Boolean array indicating outliers
@@ -209,10 +203,9 @@ def detect_outliers(
 
 
 def resample_data(
-    data: xr.Dataset, target_resolution: Dict[str, float], method: str = "linear"
+    data: xr.Dataset, target_resolution: dict[str, float], method: str = "linear"
 ) -> xr.Dataset:
-    """
-    Resample spatial data to target resolution.
+    """Resample spatial data to target resolution.
 
     Parameters
     ----------
@@ -223,7 +216,7 @@ def resample_data(
     method : str
         Interpolation method
 
-    Returns
+    Returns:
     -------
     xr.Dataset
         Resampled dataset
@@ -243,13 +236,12 @@ def resample_data(
 
 def create_time_mask(
     time_coord: xr.DataArray,
-    include_months: Optional[List[int]] = None,
-    include_seasons: Optional[List[str]] = None,
-    include_years: Optional[List[int]] = None,
+    include_months: list[int] | None = None,
+    include_seasons: list[str] | None = None,
+    include_years: list[int] | None = None,
     exclude_weekends: bool = False,
 ) -> xr.DataArray:
-    """
-    Create a time mask for filtering data.
+    """Create a time mask for filtering data.
 
     Parameters
     ----------
@@ -264,7 +256,7 @@ def create_time_mask(
     exclude_weekends : bool
         Whether to exclude weekends
 
-    Returns
+    Returns:
     -------
     xr.DataArray
         Boolean mask array
@@ -305,10 +297,9 @@ def create_time_mask(
 
 
 def align_datasets(
-    datasets: List[xr.Dataset], method: str = "inner"
-) -> List[xr.Dataset]:
-    """
-    Align multiple datasets to common coordinates.
+    datasets: list[xr.Dataset], method: str = "inner"
+) -> list[xr.Dataset]:
+    """Align multiple datasets to common coordinates.
 
     Parameters
     ----------
@@ -317,7 +308,7 @@ def align_datasets(
     method : str
         Alignment method ('inner', 'outer', 'left', 'right')
 
-    Returns
+    Returns:
     -------
     list of xr.Dataset
         Aligned datasets
@@ -340,8 +331,7 @@ def align_datasets(
 def calculate_trends(
     data: xr.DataArray, time_dim: str = "time", method: str = "linear"
 ) -> xr.Dataset:
-    """
-    Calculate temporal trends in data.
+    """Calculate temporal trends in data.
 
     Parameters
     ----------
@@ -352,7 +342,7 @@ def calculate_trends(
     method : str
         Trend calculation method ('linear', 'theil_sen')
 
-    Returns
+    Returns:
     -------
     xr.Dataset
         Dataset with trend statistics (slope, intercept, r_value, p_value)
@@ -412,8 +402,7 @@ def calculate_trends(
 
 
 def convert_units(data: xr.DataArray, from_unit: str, to_unit: str) -> xr.DataArray:
-    """
-    Convert data units.
+    """Convert data units.
 
     Parameters
     ----------
@@ -424,7 +413,7 @@ def convert_units(data: xr.DataArray, from_unit: str, to_unit: str) -> xr.DataAr
     to_unit : str
         Target unit
 
-    Returns
+    Returns:
     -------
     xr.DataArray
         Data with converted units
@@ -456,8 +445,7 @@ def convert_units(data: xr.DataArray, from_unit: str, to_unit: str) -> xr.DataAr
 def memory_usage_check(
     dataset: xr.Dataset, operation: str = "load", memory_limit_gb: float = 8.0
 ) -> bool:
-    """
-    Check if dataset operation will exceed memory limits.
+    """Check if dataset operation will exceed memory limits.
 
     Parameters
     ----------
@@ -468,7 +456,7 @@ def memory_usage_check(
     memory_limit_gb : float
         Memory limit in GB
 
-    Returns
+    Returns:
     -------
     bool
         True if operation is safe
@@ -497,8 +485,7 @@ def memory_usage_check(
 def optimize_chunks(
     dataset: xr.Dataset, target_chunk_size_mb: float = 128
 ) -> xr.Dataset:
-    """
-    Optimize chunk sizes for dask operations.
+    """Optimize chunk sizes for dask operations.
 
     Parameters
     ----------
@@ -507,7 +494,7 @@ def optimize_chunks(
     target_chunk_size_mb : float
         Target chunk size in MB
 
-    Returns
+    Returns:
     -------
     xr.Dataset
         Dataset with optimized chunks
@@ -533,15 +520,14 @@ def optimize_chunks(
 
 
 def validate_crs(dataset: xr.Dataset) -> bool:
-    """
-    Validate coordinate reference system information.
+    """Validate coordinate reference system information.
 
     Parameters
     ----------
     dataset : xr.Dataset
         Dataset to validate
 
-    Returns
+    Returns:
     -------
     bool
         True if CRS is valid
@@ -563,9 +549,8 @@ def validate_crs(dataset: xr.Dataset) -> bool:
 
 def create_directory_structure(
     base_dir: Path, analysis_type: str = "comprehensive"
-) -> Dict[str, Path]:
-    """
-    Create standardized directory structure for analysis outputs.
+) -> dict[str, Path]:
+    """Create standardized directory structure for analysis outputs.
 
     Parameters
     ----------
@@ -574,7 +559,7 @@ def create_directory_structure(
     analysis_type : str
         Type of analysis ('temporal', 'spatial', 'comprehensive')
 
-    Returns
+    Returns:
     -------
     dict
         Dictionary of created directories
@@ -613,15 +598,14 @@ def create_directory_structure(
 
 
 def format_file_size(size_bytes: int) -> str:
-    """
-    Format file size in human-readable format.
+    """Format file size in human-readable format.
 
     Parameters
     ----------
     size_bytes : int
         Size in bytes
 
-    Returns
+    Returns:
     -------
     str
         Formatted size string
@@ -634,8 +618,7 @@ def format_file_size(size_bytes: int) -> str:
 
 
 def estimate_processing_time(dataset_size_gb: float, operation: str = "load") -> str:
-    """
-    Estimate processing time based on dataset size.
+    """Estimate processing time based on dataset size.
 
     Parameters
     ----------
@@ -644,7 +627,7 @@ def estimate_processing_time(dataset_size_gb: float, operation: str = "load") ->
     operation : str
         Type of operation ('load', 'aggregate', 'extract', 'export')
 
-    Returns
+    Returns:
     -------
     str
         Estimated time string
@@ -671,9 +654,8 @@ def estimate_processing_time(dataset_size_gb: float, operation: str = "load") ->
 
 def check_data_completeness(
     data: xr.DataArray, min_coverage: float = 0.8
-) -> Dict[str, Any]:
-    """
-    Check data completeness and identify gaps.
+) -> dict[str, Any]:
+    """Check data completeness and identify gaps.
 
     Parameters
     ----------
@@ -682,7 +664,7 @@ def check_data_completeness(
     min_coverage : float
         Minimum data coverage threshold (0-1)
 
-    Returns
+    Returns:
     -------
     dict
         Completeness report

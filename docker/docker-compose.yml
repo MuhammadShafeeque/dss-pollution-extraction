@@ -6,7 +6,11 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - ../data:/app/data
-      - ../output:/app/output
+      - ../:/workspaces/dss-pollution-extraction
+      - ../data:/workspaces/dss-pollution-extraction/data
+      - ../output:/workspaces/dss-pollution-extraction/output
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/workspaces/dss-pollution-extraction
+      - PYTHONUNBUFFERED=1
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    working_dir: /workspaces/dss-pollution-extraction

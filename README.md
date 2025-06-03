@@ -192,7 +192,7 @@ for file_path in file_patterns:
     with PollutionAnalyzer(file_path, pollution_type="no2") as analyzer:
         # Annual analysis
         annual_avg = analyzer.get_annual_averages()
-        
+
         # Export results
         year = file_path.split("_")[1].split(".")[0]
         analyzer.export_to_geotiff(f"no2_annual_{year}.tif")

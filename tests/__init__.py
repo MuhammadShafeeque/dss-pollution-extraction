@@ -1,15 +1,10 @@
-"""
-Test package for pollution_extraction library.
+"""Test suite for pollution_extraction library.
 
-This package contains comprehensive tests for all modules in the pollution_extraction library.
+Contains comprehensive tests for all modules in the pollution_extraction
+library, including unit tests and integration tests.
 """
 
-import os
 import tempfile
-import numpy as np
-import pandas as pd
-import xarray as xr
-from datetime import datetime, timedelta
 from pathlib import Path
 
 # Test configuration

@@ -38,7 +38,7 @@ keywords = [
     "air quality",
     "atmospheric science",
     "netcdf",
-    "xarray", 
+    "xarray",
     "geospatial",
     "environmental data",
     "PM2.5",
@@ -219,3 +219,38 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
+
+[tool.ruff]
+# Enable the pycodestyle (`E`), pyflakes (`F`), isort (`I`), and other rules
+select = ["E", "F", "I", "N", "B", "D", "UP", "C90", "W", "RUF"]
+ignore = []
+
+# Exclude files and directories
+exclude = [
+    ".git",
+    ".tox",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+# Same as Black
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.11
+target-version = "py311"
+
+[tool.ruff.lint]
+# Google-style docstrings
+pydocstyle = {convention = "google"}
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pollution_extraction"]
+combine-as-imports = true

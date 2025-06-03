@@ -1,8 +1,13 @@
+"""Test fixtures for pollution_extraction test suite.
+
+This module contains pytest fixtures used across multiple test modules.
+"""
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
-import geopandas as gpd
-import pandas as pd
-import numpy as np
 from shapely.geometry import Point, Polygon
 
 

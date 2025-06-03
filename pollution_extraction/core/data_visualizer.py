@@ -1,20 +1,18 @@
-"""
-Data visualization module for pollution data.
-"""
+"""Data visualization module for pollution data."""
 
-import xarray as xr
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.colors import ListedColormap
-import seaborn as sns
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from pathlib import Path
-from typing import Union, List, Dict, Optional, Tuple, Any
 import logging
 import warnings
+from pathlib import Path
+from typing import Any
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import xarray as xr
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +21,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class DataVisualizer:
-    """
-    Class for visualizing pollution data.
+    """Class for visualizing pollution data.
 
     Provides various plotting methods including maps, time series,
     distributions, and comparative analyses.
@@ -45,8 +42,7 @@ class DataVisualizer:
         pollution_variable: str,
         pollution_type: str = "default",
     ):
-        """
-        Initialize the data visualizer.
+        """Initialize the data visualizer.
 
         Parameters
         ----------
@@ -67,26 +63,23 @@ class DataVisualizer:
         sns.set_palette("husl")
 
     def _maybe_invert_yaxis(self, ax, data):
-        """
-        Invert y-axis if y-coordinates are descending (to match imshow origin='upper').
-        """
+        """Invert y-axis if y-coordinates are descending (to match imshow origin='upper')."""
         y = data.y.values if hasattr(data, "y") else None
         if y is not None and len(y) > 1 and y[0] > y[-1]:
             ax.invert_yaxis()
 
     def plot_spatial_map(
         self,
-        time_index: Union[int, str] = 0,
-        figsize: Tuple[int, int] = (12, 8),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        time_index: int | str = 0,
+        figsize: tuple[int, int] = (12, 8),
+        title: str | None = None,
+        save_path: str | Path | None = None,
         show_colorbar: bool = True,
-        vmin: Optional[float] = None,
-        vmax: Optional[float] = None,
-        projection: Optional[Any] = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        projection: Any | None = None,
     ):
-        """
-        Create a spatial map of pollution data.
+        """Create a spatial map of pollution data.
 
         Parameters
         ----------
@@ -105,7 +98,7 @@ class DataVisualizer:
         projection : cartopy projection, optional
             Map projection
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -130,7 +123,7 @@ class DataVisualizer:
             fig, ax = plt.subplots(figsize=figsize)
 
         # Plot data
-        im = data.plot(
+        data.plot(
             ax=ax,
             cmap=self.cmap,
             add_colorbar=show_colorbar,
@@ -163,14 +156,13 @@ class DataVisualizer:
 
     def plot_time_series(
         self,
-        location: Optional[Dict[str, float]] = None,
+        location: dict[str, float] | None = None,
         spatial_aggregation: str = "mean",
-        figsize: Tuple[int, int] = (12, 6),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        figsize: tuple[int, int] = (12, 6),
+        title: str | None = None,
+        save_path: str | Path | None = None,
     ) -> plt.Figure:
-        """
-        Create a time series plot.
+        """Create a time series plot.
 
         Parameters
         ----------
@@ -185,7 +177,7 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -237,12 +229,11 @@ class DataVisualizer:
     def plot_seasonal_cycle(
         self,
         spatial_aggregation: str = "mean",
-        figsize: Tuple[int, int] = (10, 6),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        figsize: tuple[int, int] = (10, 6),
+        title: str | None = None,
+        save_path: str | Path | None = None,
     ) -> plt.Figure:
-        """
-        Create a seasonal cycle plot.
+        """Create a seasonal cycle plot.
 
         Parameters
         ----------
@@ -255,7 +246,7 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -330,15 +321,14 @@ class DataVisualizer:
 
     def plot_distribution(
         self,
-        time_subset: Optional[slice] = None,
-        spatial_subset: Optional[Dict] = None,
+        time_subset: slice | None = None,
+        spatial_subset: dict | None = None,
         bins: int = 50,
-        figsize: Tuple[int, int] = (10, 6),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        figsize: tuple[int, int] = (10, 6),
+        title: str | None = None,
+        save_path: str | Path | None = None,
     ) -> plt.Figure:
-        """
-        Create a distribution plot (histogram).
+        """Create a distribution plot (histogram).
 
         Parameters
         ----------
@@ -355,7 +345,7 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -416,12 +406,11 @@ class DataVisualizer:
     def plot_spatial_statistics(
         self,
         statistic: str = "mean",
-        figsize: Tuple[int, int] = (12, 8),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        figsize: tuple[int, int] = (12, 8),
+        title: str | None = None,
+        save_path: str | Path | None = None,
     ):
-        """
-        Create a spatial map of temporal statistics.
+        """Create a spatial map of temporal statistics.
 
         Parameters
         ----------
@@ -434,7 +423,7 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -456,7 +445,7 @@ class DataVisualizer:
         # Create plot
         fig, ax = plt.subplots(figsize=figsize)
 
-        im = stat_data.plot(ax=ax, cmap=self.cmap, add_colorbar=True)
+        stat_data.plot(ax=ax, cmap=self.cmap, add_colorbar=True)
         # Invert y-axis if needed for correct orientation
         self._maybe_invert_yaxis(ax, stat_data)
 
@@ -480,13 +469,12 @@ class DataVisualizer:
         other_dataset: xr.Dataset,
         other_variable: str,
         comparison_type: str = "difference",
-        time_index: Union[int, str] = 0,
-        figsize: Tuple[int, int] = (15, 5),
-        title: Optional[str] = None,
-        save_path: Optional[Union[str, Path]] = None,
+        time_index: int | str = 0,
+        figsize: tuple[int, int] = (15, 5),
+        title: str | None = None,
+        save_path: str | Path | None = None,
     ) -> plt.Figure:
-        """
-        Create a comparison plot between two datasets.
+        """Create a comparison plot between two datasets.
 
         Parameters
         ----------
@@ -505,7 +493,7 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns
+        Returns:
         -------
         plt.Figure
             The created figure
@@ -561,13 +549,12 @@ class DataVisualizer:
 
     def create_animation(
         self,
-        output_path: Union[str, Path],
+        output_path: str | Path,
         time_step: int = 1,
         fps: int = 5,
         dpi: int = 100,
     ) -> None:
-        """
-        Create an animation of the spatial data over time.
+        """Create an animation of the spatial data over time.
 
         Parameters
         ----------

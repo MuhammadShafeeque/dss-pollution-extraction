@@ -1,0 +1,36 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Python files
+*.py text diff=python
+*.pyi text diff=python
+*.pyx text diff=python
+*.pyd binary
+
+# Documentation
+*.md text diff=markdown
+*.rst text
+*.txt text
+*.pdf binary
+
+# Jupyter notebooks
+*.ipynb text
+
+# Data files
+*.csv text
+*.json text
+*.yaml text
+*.yml text
+*.nc binary
+*.geojson text
+
+# Graphics
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Docker
+Dockerfile text
+*.dockerignore text

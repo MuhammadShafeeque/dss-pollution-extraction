@@ -1,11 +1,9 @@
-"""
-Example usage scripts for DSS pollution data analysis.
-"""
+"""Example usage scripts for DSS pollution data analysis."""
 
-from pathlib import Path
-from pollution_extraction import PollutionAnalyzer
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
+
+from pollution_extraction import PollutionAnalyzer
 
 
 def example_basic_analysis():
@@ -28,14 +26,14 @@ def example_basic_analysis():
             print(f"Mean concentration: {info['data_summary']['mean']:.3f} μg/m³")
 
             # Create a simple time series plot
-            fig = analyzer.plot_time_series(
+            analyzer.plot_time_series(
                 title="PM2.5 Time Series (Domain Average)",
                 save_path="pm25_timeseries.png",
             )
             print("Time series plot saved as 'pm25_timeseries.png'")
 
             # Create a spatial map for the first time step
-            fig = analyzer.plot_map(
+            analyzer.plot_map(
                 time_index=0,
                 title="PM2.5 Spatial Distribution",
                 save_path="pm25_spatial.png",
@@ -62,25 +60,25 @@ def example_temporal_analysis():
             print(f"Monthly averages calculated for {len(monthly_avg.month)} months")
 
             # Seasonal averages
-            seasonal_avg = analyzer.get_seasonal_averages()
-            print(f"Seasonal averages calculated")
+            analyzer.get_seasonal_averages()
+            print("Seasonal averages calculated")
 
             # Annual averages for specific years
-            annual_avg = analyzer.get_annual_averages(years=[2010, 2011, 2012])
-            print(f"Annual averages calculated for selected years")
+            analyzer.get_annual_averages(years=[2010, 2011, 2012])
+            print("Annual averages calculated for selected years")
 
             # Custom period analysis
             custom_periods = [
                 ("2010-06-01", "2010-08-31"),  # Summer 2010
                 ("2010-12-01", "2011-02-28"),  # Winter 2010-2011
             ]
-            custom_avg = analyzer.get_custom_period_averages(
+            analyzer.get_custom_period_averages(
                 custom_periods, period_names=["Summer_2010", "Winter_2010_2011"]
             )
             print("Custom period averages calculated")
 
             # Create seasonal cycle plot
-            fig = analyzer.plot_seasonal_cycle(
+            analyzer.plot_seasonal_cycle(
                 title="NO2 Seasonal Cycle", save_path="no2_seasonal_cycle.png"
             )
             print("Seasonal cycle plot saved")
@@ -158,7 +156,8 @@ def example_event_based_analysis():
         from shapely.geometry import Point
 
         geometry = [
-            Point(lon, lat) for lon, lat in zip(events_data["lon"], events_data["lat"])
+            Point(lon, lat)
+            for lon, lat in zip(events_data["lon"], events_data["lat"], strict=False)
         ]
         events_gdf = gpd.GeoDataFrame(events_data, geometry=geometry, crs="EPSG:4326")
 
@@ -203,7 +202,7 @@ def example_comprehensive_analysis():
                 # points_file="path/to/points.csv"     # Uncomment if you have points
             )
 
-            print(f"Comprehensive analysis completed")
+            print("Comprehensive analysis completed")
             print(f"Results saved to: {output_dir}")
             print(f"Available result keys: {list(results.keys())}")
 
@@ -266,7 +265,7 @@ def example_custom_visualization():
 
             # 1. Time series at a specific location
             location = {"x": 4321000, "y": 3210000}  # Example LAEA coordinates
-            fig = analyzer.plot_time_series(
+            analyzer.plot_time_series(
                 location=location,
                 title="BC Time Series at Specific Location",
                 figsize=(14, 6),
@@ -274,7 +273,7 @@ def example_custom_visualization():
             )
 
             # 2. Distribution plot
-            fig = analyzer.plot_distribution(
+            analyzer.plot_distribution(
                 title="BC Distribution Analysis",
                 bins=100,
                 save_path="bc_distribution.png",
@@ -282,7 +281,7 @@ def example_custom_visualization():
 
             # 3. Spatial statistics maps
             for stat in ["mean", "max", "std"]:
-                fig = analyzer.plot_spatial_statistics(
+                analyzer.plot_spatial_statistics(
                     statistic=stat,
                     title=f"BC {stat.title()} Over Time",
                     save_path=f"bc_spatial_{stat}.png",
@@ -319,7 +318,7 @@ def example_health_threshold_analysis():
             print(f"EU Annual Limit: {thresholds['eu_annual']} μg/m³")
 
             # Calculate annual averages
-            annual_avg = analyzer.get_annual_averages()
+            analyzer.get_annual_averages()
 
             # Calculate exceedances
             annual_mean = analyzer.dataset[analyzer.pollution_variable].mean(dim="time")
@@ -327,7 +326,7 @@ def example_health_threshold_analysis():
             eu_exceedance = (annual_mean > thresholds["eu_annual"]).sum().values
             total_cells = annual_mean.size
 
-            print(f"\nExceedance Analysis (based on annual means):")
+            print("\nExceedance Analysis (based on annual means):")
             print(
                 f"  WHO guideline exceeded in {who_exceedance}/{total_cells} grid cells ({100 * who_exceedance / total_cells:.1f}%)"
             )
@@ -403,7 +402,7 @@ def example_batch_processing():
                 year = file_pattern.split("_")[1].split(".")[0]
 
                 # Calculate annual average
-                annual_avg = analyzer.get_annual_averages()
+                analyzer.get_annual_averages()
 
                 # Export to GeoTIFF
                 analyzer.export_to_geotiff(
@@ -485,9 +484,9 @@ def example_quality_control():
     try:
         with PollutionAnalyzer(file_path, pollution_type="pm10") as analyzer:
             from pollution_extraction.utils import (
+                calculate_statistics,
                 check_data_completeness,
                 detect_outliers,
-                calculate_statistics,
             )
 
             data = analyzer.data_variable
@@ -506,7 +505,7 @@ def example_quality_control():
             valid_data = data_flat[~pd.isna(data_flat)]
             outliers = detect_outliers(valid_data, method="iqr")
 
-            print(f"\nOutlier Detection:")
+            print("\nOutlier Detection:")
             print(f"  Outliers found: {outliers.sum():,}/{len(valid_data):,}")
             print(
                 f"  Outlier percentage: {100 * outliers.sum() / len(valid_data):.2f}%"
@@ -514,7 +513,7 @@ def example_quality_control():
 
             # Calculate comprehensive statistics
             stats = calculate_statistics(valid_data)
-            print(f"\nStatistical Summary:")
+            print("\nStatistical Summary:")
             print(f"  Mean: {stats['mean']:.2f}")
             print(f"  Std: {stats['std']:.2f}")
             print(f"  Min: {stats['min']:.2f}")
@@ -543,7 +542,7 @@ def example_advanced_spatial_analysis():
             ]
 
             # Extract with 5km buffer around each station
-            buffered_data = analyzer.spatial_extractor.extract_points(
+            analyzer.spatial_extractor.extract_points(
                 monitoring_stations,
                 buffer_distance=5000,  # 5 km buffer
             )
@@ -557,7 +556,7 @@ def example_advanced_spatial_analysis():
                 "maxy": 3500000,
             }
 
-            subset_data = analyzer.spatial_extractor.spatial_subset(bounds)
+            analyzer.spatial_extractor.spatial_subset(bounds)
             print("Data subset for specific geographical bounds")
 
             # Calculate spatial gradients (urban vs rural)
@@ -577,7 +576,7 @@ def example_advanced_spatial_analysis():
             rural_mean = float(rural_data.mean())
             gradient = urban_mean - rural_mean
 
-            print(f"\nUrban-Rural Gradient Analysis:")
+            print("\nUrban-Rural Gradient Analysis:")
             print(f"  Urban average: {urban_mean:.2f} μg/m³")
             print(f"  Rural average: {rural_mean:.2f} μg/m³")
             print(f"  Urban-rural gradient: {gradient:.2f} μg/m³")
@@ -625,8 +624,8 @@ def create_sample_data():
     print("CREATING SAMPLE DATA FOR EXAMPLES")
     print("=" * 60)
 
-    import xarray as xr
     import numpy as np
+    import xarray as xr
 
     # Create sample NetCDF file
     print("Creating sample NetCDF file...")

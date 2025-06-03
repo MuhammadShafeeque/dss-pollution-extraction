@@ -1,9 +1,10 @@
-"""
-Setup script for dss-pollution-extraction package.
-"""
+"""Setup script for dss-pollution-extraction package."""
 
-from setuptools import setup, find_packages
+import functools
+import operator
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read the README file
 this_directory = Path(__file__).parent
@@ -12,7 +13,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 # Read requirements
 requirements = []
 try:
-    with open("requirements.txt", "r") as f:
+    with open("requirements.txt") as f:
         requirements = [
             line.strip() for line in f if line.strip() and not line.startswith("#")
         ]
@@ -62,7 +63,9 @@ extras_require = {
 }
 
 # All extras combined
-extras_require["all"] = list(set(sum(extras_require.values(), [])))
+extras_require["all"] = list(
+    set(functools.reduce(operator.iadd, extras_require.values(), []))
+)
 
 setup(
     name="dss-pollution-extraction",
@@ -179,7 +182,8 @@ setup(
 )
 
 # Post-installation message
-print("""
+print(
+    """
 ========================================
 DSS Pollution Extraction Package
 ========================================
@@ -204,4 +208,5 @@ Issues: https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues
 Developed by Muhammad Shafeeque
 Alfred Wegener Institute (AWI) & University of Bremen
 ========================================
-""")
+"""
+)

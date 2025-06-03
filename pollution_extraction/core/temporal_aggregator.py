@@ -1,19 +1,15 @@
-"""
-Temporal aggregation module for pollution data.
-"""
+"""Temporal aggregation module for pollution data."""
 
-import xarray as xr
-import pandas as pd
-import numpy as np
-from typing import Union, List, Dict, Optional, Tuple
 import logging
+
+import pandas as pd
+import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 
 class TemporalAggregator:
-    """
-    Class for performing temporal aggregations on pollution data.
+    """Class for performing temporal aggregations on pollution data.
 
     Supports various aggregation methods including mean, sum, min, max, std.
     """
@@ -31,8 +27,7 @@ class TemporalAggregator:
     AGGREGATION_METHODS = ["mean", "sum", "min", "max", "std", "median", "count"]
 
     def __init__(self, dataset: xr.Dataset, pollution_variable: str):
-        """
-        Initialize the temporal aggregator.
+        """Initialize the temporal aggregator.
 
         Parameters
         ----------
@@ -62,7 +57,7 @@ class TemporalAggregator:
         data.coords["season"] = ("time", self._get_seasons(data.time))
         return data
 
-    def _get_seasons(self, time_coord: xr.DataArray) -> List[str]:
+    def _get_seasons(self, time_coord: xr.DataArray) -> list[str]:
         """Get season labels for each time point."""
         months = time_coord.dt.month.values
         seasons = []
@@ -76,15 +71,14 @@ class TemporalAggregator:
         return seasons
 
     def daily_aggregation(self, method: str = "mean") -> xr.Dataset:
-        """
-        Aggregate to daily values (useful if data has sub-daily resolution).
+        """Aggregate to daily values (useful if data has sub-daily resolution).
 
         Parameters
         ----------
         method : str
             Aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Daily aggregated dataset
@@ -104,11 +98,10 @@ class TemporalAggregator:
     def monthly_aggregation(
         self,
         method: str = "mean",
-        specific_months: Optional[List[int]] = None,
-        years: Optional[List[int]] = None,
+        specific_months: list[int] | None = None,
+        years: list[int] | None = None,
     ) -> xr.Dataset:
-        """
-        Aggregate to monthly values.
+        """Aggregate to monthly values.
 
         Parameters
         ----------
@@ -119,7 +112,7 @@ class TemporalAggregator:
         years : list of int, optional
             Specific years to include
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Monthly aggregated dataset
@@ -149,10 +142,9 @@ class TemporalAggregator:
         return result
 
     def annual_aggregation(
-        self, method: str = "mean", specific_years: Optional[List[int]] = None
+        self, method: str = "mean", specific_years: list[int] | None = None
     ) -> xr.Dataset:
-        """
-        Aggregate to annual values.
+        """Aggregate to annual values.
 
         Parameters
         ----------
@@ -161,7 +153,7 @@ class TemporalAggregator:
         specific_years : list of int, optional
             Specific years to include
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Annual aggregated dataset
@@ -187,11 +179,10 @@ class TemporalAggregator:
     def seasonal_aggregation(
         self,
         method: str = "mean",
-        seasons: Optional[List[str]] = None,
-        years: Optional[List[int]] = None,
+        seasons: list[str] | None = None,
+        years: list[int] | None = None,
     ) -> xr.Dataset:
-        """
-        Aggregate to seasonal values.
+        """Aggregate to seasonal values.
 
         Parameters
         ----------
@@ -202,7 +193,7 @@ class TemporalAggregator:
         years : list of int, optional
             Specific years to include
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Seasonal aggregated dataset
@@ -239,12 +230,11 @@ class TemporalAggregator:
 
     def custom_time_aggregation(
         self,
-        time_periods: List[Tuple[str, str]],
+        time_periods: list[tuple[str, str]],
         method: str = "mean",
-        period_names: Optional[List[str]] = None,
+        period_names: list[str] | None = None,
     ) -> xr.Dataset:
-        """
-        Aggregate over custom time periods.
+        """Aggregate over custom time periods.
 
         Parameters
         ----------
@@ -255,7 +245,7 @@ class TemporalAggregator:
         period_names : list of str, optional
             Names for each period
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Custom period aggregated dataset
@@ -291,10 +281,9 @@ class TemporalAggregator:
         window: int,
         method: str = "mean",
         center: bool = True,
-        min_periods: Optional[int] = None,
+        min_periods: int | None = None,
     ) -> xr.Dataset:
-        """
-        Apply rolling window aggregation.
+        """Apply rolling window aggregation.
 
         Parameters
         ----------
@@ -307,7 +296,7 @@ class TemporalAggregator:
         min_periods : int, optional
             Minimum number of observations required
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Rolling aggregated dataset
@@ -329,8 +318,7 @@ class TemporalAggregator:
     def time_groupby_aggregation(
         self, groupby_freq: str, method: str = "mean"
     ) -> xr.Dataset:
-        """
-        Group by time frequency and aggregate.
+        """Group by time frequency and aggregate.
 
         Parameters
         ----------
@@ -339,7 +327,7 @@ class TemporalAggregator:
         method : str
             Aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Frequency-grouped aggregated dataset
@@ -355,8 +343,7 @@ class TemporalAggregator:
         return result
 
     def get_time_before_date(self, reference_date: str, days_before: int) -> xr.Dataset:
-        """
-        Get data for a specific number of days before a reference date.
+        """Get data for a specific number of days before a reference date.
 
         Parameters
         ----------
@@ -365,7 +352,7 @@ class TemporalAggregator:
         days_before : int
             Number of days before the reference date
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Dataset for the specified period
@@ -376,10 +363,9 @@ class TemporalAggregator:
         return self.dataset.sel(time=slice(start_date, ref_date))
 
     def aggregate_multiple_periods(
-        self, periods_config: List[Dict]
-    ) -> Dict[str, xr.Dataset]:
-        """
-        Aggregate multiple periods with different configurations.
+        self, periods_config: list[dict]
+    ) -> dict[str, xr.Dataset]:
+        """Aggregate multiple periods with different configurations.
 
         Parameters
         ----------
@@ -389,7 +375,7 @@ class TemporalAggregator:
             - 'method': aggregation method
             - Additional parameters specific to each type
 
-        Returns
+        Returns:
         -------
         dict
             Dictionary of aggregated datasets keyed by period names

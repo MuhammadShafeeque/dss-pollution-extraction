@@ -1,19 +1,16 @@
-"""
-Core data reader module for pollution NetCDF files.
-"""
+"""Core data reader module for pollution NetCDF files."""
 
-import xarray as xr
-import pandas as pd
-from pathlib import Path
-from typing import Union, List, Dict, Optional
 import logging
+from pathlib import Path
+
+import pandas as pd
+import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 
 class PollutionDataReader:
-    """
-    Core class for reading and handling pollution data from NetCDF files.
+    """Core class for reading and handling pollution data from NetCDF files.
 
     Supports various pollution types including BC, NO2, PM2.5, and PM10.
     """
@@ -46,9 +43,8 @@ class PollutionDataReader:
         },
     }
 
-    def __init__(self, file_path: Union[str, Path], pollution_type: str = None):
-        """
-        Initialize the pollution data reader.
+    def __init__(self, file_path: str | Path, pollution_type: str | None = None):
+        """Initialize the pollution data reader.
 
         Parameters
         ----------
@@ -78,10 +74,9 @@ class PollutionDataReader:
             raise
 
     def _detect_pollution_type(self) -> str:
-        """
-        Auto-detect pollution type based on variable names in the dataset.
+        """Auto-detect pollution type based on variable names in the dataset.
 
-        Returns
+        Returns:
         -------
         str
             Detected pollution type
@@ -108,7 +103,7 @@ class PollutionDataReader:
         return pd.to_datetime(time_values[0]), pd.to_datetime(time_values[-1])
 
     @property
-    def spatial_bounds(self) -> Dict[str, float]:
+    def spatial_bounds(self) -> dict[str, float]:
         """Get spatial bounds of the dataset."""
         return {
             "x_min": float(self.dataset.x.min()),
@@ -118,7 +113,7 @@ class PollutionDataReader:
         }
 
     @property
-    def coordinate_system(self) -> Dict:
+    def coordinate_system(self) -> dict:
         """Get coordinate system information."""
         crs_info = {}
         if "crs" in self.dataset:
@@ -137,11 +132,10 @@ class PollutionDataReader:
             }
         return crs_info
 
-    def get_basic_info(self) -> Dict:
-        """
-        Get basic information about the dataset.
+    def get_basic_info(self) -> dict:
+        """Get basic information about the dataset.
 
-        Returns
+        Returns:
         -------
         dict
             Basic dataset information
@@ -161,11 +155,10 @@ class PollutionDataReader:
             "coordinate_system": self.coordinate_system,
         }
 
-    def get_data_summary(self) -> Dict:
-        """
-        Get statistical summary of the pollution data.
+    def get_data_summary(self) -> dict:
+        """Get statistical summary of the pollution data.
 
-        Returns
+        Returns:
         -------
         dict
             Statistical summary
@@ -184,8 +177,7 @@ class PollutionDataReader:
         }
 
     def select_time_range(self, start_date: str, end_date: str) -> xr.Dataset:
-        """
-        Select data for a specific time range.
+        """Select data for a specific time range.
 
         Parameters
         ----------
@@ -194,23 +186,22 @@ class PollutionDataReader:
         end_date : str
             End date in format 'YYYY-MM-DD'
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Dataset subset for the time range
         """
         return self.dataset.sel(time=slice(start_date, end_date))
 
-    def select_time_points(self, dates: List[str]) -> xr.Dataset:
-        """
-        Select data for specific time points.
+    def select_time_points(self, dates: list[str]) -> xr.Dataset:
+        """Select data for specific time points.
 
         Parameters
         ----------
         dates : list of str
             List of dates in format 'YYYY-MM-DD'
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Dataset subset for the specified dates

@@ -1,21 +1,18 @@
-"""
-Main pollution analyzer class that coordinates all components.
-"""
+"""Main pollution analyzer class that coordinates all components."""
 
-import xarray as xr
-import pandas as pd
-import geopandas as gpd
-from pathlib import Path
-from typing import Union, List, Dict, Optional, Tuple, Any
 import logging
-import matplotlib.pyplot as plt
+from pathlib import Path
+from typing import Any
+
+import geopandas as gpd
+import xarray as xr
 from matplotlib.figure import Figure
 
-from .core.data_reader import PollutionDataReader
-from .core.temporal_aggregator import TemporalAggregator
-from .core.spatial_extractor import SpatialExtractor
-from .core.data_visualizer import DataVisualizer
 from .core.data_exporter import DataExporter
+from .core.data_reader import PollutionDataReader
+from .core.data_visualizer import DataVisualizer
+from .core.spatial_extractor import SpatialExtractor
+from .core.temporal_aggregator import TemporalAggregator
 
 # Set up logging
 logging.basicConfig(
@@ -25,16 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class PollutionAnalyzer:
-    """
-    Main class for pollution data analysis.
+    """Main class for pollution data analysis.
 
     Provides a high-level interface for reading, processing, analyzing,
     visualizing, and exporting pollution data from NetCDF files.
     """
 
-    def __init__(self, file_path: Union[str, Path], pollution_type: str = None):
-        """
-        Initialize the pollution analyzer.
+    def __init__(self, file_path: str | Path, pollution_type: str | None = None):
+        """Initialize the pollution analyzer.
 
         Parameters
         ----------
@@ -63,11 +58,10 @@ class PollutionAnalyzer:
 
         logger.info(f"PollutionAnalyzer initialized for {self.pollution_type} data")
 
-    def get_info(self) -> Dict:
-        """
-        Get comprehensive information about the dataset.
+    def get_info(self) -> dict:
+        """Get comprehensive information about the dataset.
 
-        Returns
+        Returns:
         -------
         dict
             Dataset information including basic info and statistics
@@ -98,13 +92,15 @@ class PollutionAnalyzer:
 
         print("\nSPATIAL INFORMATION:")
         print(
-            f"Dimensions: {basic['spatial_dimensions']['x']} x {basic['spatial_dimensions']['y']}"
+            f"Dimensions: {basic['spatial_dimensions']['x']} x "
+            f"{basic['spatial_dimensions']['y']}"
         )
         print(
             f"X Range: {basic['spatial_bounds']['x_min']:.0f} to {basic['spatial_bounds']['x_max']:.0f}"
         )
         print(
-            f"Y Range: {basic['spatial_bounds']['y_min']:.0f} to {basic['spatial_bounds']['y_max']:.0f}"
+            f"Y Range: {basic['spatial_bounds']['y_min']:.0f} to "
+            f"{basic['spatial_bounds']['y_max']:.0f}"
         )
 
         print("\nDATA STATISTICS:")
@@ -118,12 +114,11 @@ class PollutionAnalyzer:
     # Temporal Analysis Methods
     def get_monthly_averages(
         self,
-        months: Optional[List[int]] = None,
-        years: Optional[List[int]] = None,
+        months: list[int] | None = None,
+        years: list[int] | None = None,
         method: str = "mean",
     ) -> xr.Dataset:
-        """
-        Get monthly averages.
+        """Get monthly averages.
 
         Parameters
         ----------
@@ -134,7 +129,7 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Monthly aggregated data
@@ -144,10 +139,9 @@ class PollutionAnalyzer:
         )
 
     def get_annual_averages(
-        self, years: Optional[List[int]] = None, method: str = "mean"
+        self, years: list[int] | None = None, method: str = "mean"
     ) -> xr.Dataset:
-        """
-        Get annual averages.
+        """Get annual averages.
 
         Parameters
         ----------
@@ -156,7 +150,7 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Annual aggregated data
@@ -167,12 +161,11 @@ class PollutionAnalyzer:
 
     def get_seasonal_averages(
         self,
-        seasons: Optional[List[str]] = None,
-        years: Optional[List[int]] = None,
+        seasons: list[str] | None = None,
+        years: list[int] | None = None,
         method: str = "mean",
     ) -> xr.Dataset:
-        """
-        Get seasonal averages.
+        """Get seasonal averages.
 
         Parameters
         ----------
@@ -183,7 +176,7 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Seasonal aggregated data
@@ -194,12 +187,11 @@ class PollutionAnalyzer:
 
     def get_custom_period_averages(
         self,
-        time_periods: List[Tuple[str, str]],
+        time_periods: list[tuple[str, str]],
         method: str = "mean",
-        period_names: Optional[List[str]] = None,
+        period_names: list[str] | None = None,
     ) -> xr.Dataset:
-        """
-        Get averages for custom time periods.
+        """Get averages for custom time periods.
 
         Parameters
         ----------
@@ -210,7 +202,7 @@ class PollutionAnalyzer:
         period_names : list of str, optional
             Names for each period
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Custom period aggregated data
@@ -222,11 +214,10 @@ class PollutionAnalyzer:
     # Spatial Extraction Methods
     def extract_at_points(
         self,
-        locations: Union[str, Path, List[Tuple[float, float]], gpd.GeoDataFrame],
+        locations: str | Path | list[tuple[float, float]] | gpd.GeoDataFrame,
         method: str = "nearest",
     ) -> xr.Dataset:
-        """
-        Extract data at specific point locations.
+        """Extract data at specific point locations.
 
         Parameters
         ----------
@@ -235,7 +226,7 @@ class PollutionAnalyzer:
         method : str
             Extraction method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted point data
@@ -244,11 +235,10 @@ class PollutionAnalyzer:
 
     def extract_for_polygons(
         self,
-        polygons: Union[str, Path, gpd.GeoDataFrame],
+        polygons: str | Path | gpd.GeoDataFrame,
         aggregation_method: str = "mean",
     ) -> xr.Dataset:
-        """
-        Extract data within polygon boundaries.
+        """Extract data within polygon boundaries.
 
         Parameters
         ----------
@@ -257,7 +247,7 @@ class PollutionAnalyzer:
         aggregation_method : str
             Spatial aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted polygon data
@@ -265,10 +255,9 @@ class PollutionAnalyzer:
         return self.spatial_extractor.extract_polygons(polygons, aggregation_method)
 
     def extract_for_nuts3(
-        self, nuts3_file: Union[str, Path], aggregation_method: str = "mean"
+        self, nuts3_file: str | Path, aggregation_method: str = "mean"
     ) -> xr.Dataset:
-        """
-        Extract data for NUTS3 regions.
+        """Extract data for NUTS3 regions.
 
         Parameters
         ----------
@@ -277,7 +266,7 @@ class PollutionAnalyzer:
         aggregation_method : str
             Spatial aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted NUTS3 data
@@ -288,13 +277,12 @@ class PollutionAnalyzer:
 
     def extract_with_event_dates(
         self,
-        locations: Union[str, Path, gpd.GeoDataFrame],
+        locations: str | Path | gpd.GeoDataFrame,
         date_column: str = "date",
         days_before: int = 0,
         aggregation_method: str = "mean",
     ) -> xr.Dataset:
-        """
-        Extract data at locations for specific event dates.
+        """Extract data at locations for specific event dates.
 
         Parameters
         ----------
@@ -307,7 +295,7 @@ class PollutionAnalyzer:
         aggregation_method : str
             Temporal aggregation method
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted event-based data
@@ -317,12 +305,12 @@ class PollutionAnalyzer:
         )
 
     # Visualization Methods
-    def plot_map(self, time_index: Union[int, str] = 0, **kwargs) -> Figure:
+    def plot_map(self, time_index: int | str = 0, **kwargs) -> Figure:
         """Create a spatial map."""
         return self.visualizer.plot_spatial_map(time_index=time_index, **kwargs)
 
     def plot_time_series(
-        self, location: Optional[Dict[str, float]] = None, **kwargs
+        self, location: dict[str, float] | None = None, **kwargs
     ) -> Figure:
         """Create a time series plot."""
         return self.visualizer.plot_time_series(location=location, **kwargs)
@@ -339,32 +327,31 @@ class PollutionAnalyzer:
         """Create a spatial statistics map."""
         return self.visualizer.plot_spatial_statistics(statistic=statistic, **kwargs)
 
-    def create_animation(self, output_path: Union[str, Path], **kwargs) -> None:
+    def create_animation(self, output_path: str | Path, **kwargs) -> None:
         """Create an animation of temporal evolution."""
         self.visualizer.create_animation(output_path, **kwargs)
 
     # Export Methods
-    def export_to_netcdf(self, output_path: Union[str, Path], **kwargs) -> None:
+    def export_to_netcdf(self, output_path: str | Path, **kwargs) -> None:
         """Export data to NetCDF format."""
         self.exporter.to_netcdf(output_path, **kwargs)
 
-    def export_to_geotiff(self, output_path: Union[str, Path], **kwargs) -> None:
+    def export_to_geotiff(self, output_path: str | Path, **kwargs) -> None:
         """Export data to GeoTIFF format."""
         self.exporter.to_geotiff(output_path, **kwargs)
 
-    def export_to_csv(self, output_path: Union[str, Path], **kwargs) -> None:
+    def export_to_csv(self, output_path: str | Path, **kwargs) -> None:
         """Export data to CSV format."""
         self.exporter.to_csv(output_path, **kwargs)
 
     # Comprehensive Analysis Workflows
     def analyze_temporal_patterns(
         self,
-        output_dir: Union[str, Path],
+        output_dir: str | Path,
         save_plots: bool = True,
         save_data: bool = True,
-    ) -> Dict[str, Any]:
-        """
-        Perform comprehensive temporal pattern analysis.
+    ) -> dict[str, Any]:
+        """Perform comprehensive temporal pattern analysis.
 
         Parameters
         ----------
@@ -375,7 +362,7 @@ class PollutionAnalyzer:
         save_data : bool
             Whether to save processed data
 
-        Returns
+        Returns:
         -------
         dict
             Analysis results
@@ -422,14 +409,13 @@ class PollutionAnalyzer:
 
     def analyze_spatial_patterns(
         self,
-        regions_file: Union[str, Path],
-        output_dir: Union[str, Path],
+        regions_file: str | Path,
+        output_dir: str | Path,
         save_plots: bool = True,
         save_data: bool = True,
-        export_formats: List[str] = ["csv", "geojson"],
-    ) -> Dict[str, Any]:
-        """
-        Perform comprehensive spatial pattern analysis.
+        export_formats: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Perform comprehensive spatial pattern analysis.
 
         Parameters
         ----------
@@ -444,11 +430,13 @@ class PollutionAnalyzer:
         export_formats : list of str
             Export formats for extracted data
 
-        Returns
+        Returns:
         -------
         dict
             Analysis results
         """
+        if export_formats is None:
+            export_formats = ["csv", "geojson"]
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -480,12 +468,11 @@ class PollutionAnalyzer:
 
     def comprehensive_analysis(
         self,
-        output_dir: Union[str, Path],
-        regions_file: Optional[Union[str, Path]] = None,
-        points_file: Optional[Union[str, Path]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Perform comprehensive analysis including temporal and spatial patterns.
+        output_dir: str | Path,
+        regions_file: str | Path | None = None,
+        points_file: str | Path | None = None,
+    ) -> dict[str, Any]:
+        """Perform comprehensive analysis including temporal and spatial patterns.
 
         Parameters
         ----------
@@ -496,7 +483,7 @@ class PollutionAnalyzer:
         points_file : str or Path, optional
             Path to point locations file
 
-        Returns
+        Returns:
         -------
         dict
             Complete analysis results
@@ -556,4 +543,3 @@ class PollutionAnalyzer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-

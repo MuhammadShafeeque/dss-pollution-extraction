@@ -1,32 +1,124 @@
-"""
-Data export module for pollution data.
-"""
+"""Data export module for pollution data."""
 
-import xarray as xr
-import pandas as pd
+import json
+import logging
+from enum import Enum
+from pathlib import Path
+from typing import Any, Protocol, runtime_checkable
+
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import rasterio
-from rasterio.transform import from_bounds
+import xarray as xr
 from rasterio.crs import CRS
-from pathlib import Path
-from typing import Union, List, Dict, Optional, Any
-import logging
-import json
+from rasterio.transform import from_bounds
 
 logger = logging.getLogger(__name__)
 
 
+class ExportFormat(str, Enum):
+    """Supported export formats."""
+
+    CSV = "csv"
+    GEOJSON = "geojson"
+    SHAPEFILE = "shapefile"
+    NETCDF = "netcdf"
+    GEOTIFF = "geotiff"
+    JSON = "json"
+
+
+class AggregationMethod(str, Enum):
+    """Supported aggregation methods."""
+
+    MEAN = "mean"
+    MAX = "max"
+    MIN = "min"
+    SUM = "sum"
+
+
+@runtime_checkable
+class SpatialData(Protocol):
+    """Protocol for spatial data types."""
+
+    def to_crs(self, crs: Any) -> "SpatialData": ...
+    def to_file(self, filename: str, driver: str = "GeoJSON") -> None: ...
+
+
+def ensure_path(path: str | Path) -> Path:
+    """Ensure path exists and return Path object."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def aggregate_data(data: xr.DataArray, method: str, dim: str = "time") -> xr.DataArray:
+    """Aggregate data along a dimension using specified method."""
+    method = AggregationMethod(method)
+    if method == AggregationMethod.MEAN:
+        return data.mean(dim=dim)
+    if method == AggregationMethod.MAX:
+        return data.max(dim=dim)
+    if method == AggregationMethod.MIN:
+        return data.min(dim=dim)
+    if method == AggregationMethod.SUM:
+        return data.sum(dim=dim)
+    raise ValueError(f"Unsupported aggregation method: {method}")
+
+
+def get_crs(dataset: xr.Dataset, default: str = "EPSG:3035") -> CRS:
+    """Get CRS from dataset or return default."""
+    if "crs" in dataset:
+        crs_wkt = dataset.crs.attrs.get("crs_wkt", "")
+        if crs_wkt:
+            try:
+                return CRS.from_wkt(crs_wkt)
+            except Exception as e:
+                logger.warning(f"Could not parse CRS from WKT ({e!s}), using {default}")
+    return CRS.from_string(default)
+
+
+def create_transform(x_coords: np.ndarray, y_coords: np.ndarray) -> tuple:
+    """Calculate transform for GeoTIFF."""
+    x_res = x_coords[1] - x_coords[0]
+    y_res = y_coords[1] - y_coords[0]
+    return from_bounds(
+        x_coords[0] - x_res / 2,
+        y_coords[0] - y_res / 2,
+        x_coords[-1] + x_res / 2,
+        y_coords[-1] + y_res / 2,
+        len(x_coords),
+        len(y_coords),
+    )
+
+
+def select_time_data(
+    data: xr.DataArray,
+    time_index: int | str | slice,
+    aggregation_method: str | None = None,
+) -> xr.DataArray:
+    """Select and potentially aggregate time data."""
+    if isinstance(time_index, slice):
+        data = data.sel(time=time_index)
+        if aggregation_method:
+            data = aggregate_data(data, aggregation_method)
+        else:
+            data = data.isel(time=0)
+    elif isinstance(time_index, str):
+        data = data.sel(time=time_index, method="nearest")
+    else:
+        data = data.isel(time=time_index)
+    return data
+
+
 class DataExporter:
-    """
-    Class for exporting pollution data to various formats.
+    """Class for exporting pollution data to various formats.
 
     Supports export to NetCDF, GeoTIFF, CSV, GeoJSON, Shapefile, and other formats.
     """
 
     def __init__(self, dataset: xr.Dataset, pollution_variable: str):
-        """
-        Initialize the data exporter.
+        """Initialize the data exporter.
 
         Parameters
         ----------
@@ -40,13 +132,12 @@ class DataExporter:
 
     def to_netcdf(
         self,
-        output_path: Union[str, Path],
-        time_subset: Optional[slice] = None,
-        spatial_subset: Optional[Dict] = None,
-        compression: Dict[str, Any] = None,
+        output_path: str | Path,
+        time_subset: slice | None = None,
+        spatial_subset: dict | None = None,
+        compression: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Export data to NetCDF format.
+        """Export data to NetCDF format.
 
         Parameters
         ----------
@@ -84,17 +175,106 @@ class DataExporter:
         data.to_netcdf(output_path, encoding=encoding)
         logger.info(f"Data exported to NetCDF: {output_path}")
 
+    def _get_time_subset_data(
+        self,
+        data: xr.DataArray,
+        time_index: int | str | slice,
+        aggregation_method: str | None = None,
+    ) -> xr.DataArray:
+        """Get a time subset of the data with optional aggregation.
+
+        Parameters
+        ----------
+        data : xr.DataArray
+            Input data array
+        time_index : int, str, or slice
+            Time index/slice to select
+        aggregation_method : str, optional
+            Method to aggregate data over time dimension
+
+        Returns:
+        -------
+        xr.DataArray
+            Subset and potentially aggregated data
+        """
+        if isinstance(time_index, slice):
+            data = data.sel(time=time_index)
+            if aggregation_method:
+                if aggregation_method == "mean":
+                    data = data.mean(dim="time")
+                elif aggregation_method == "max":
+                    data = data.max(dim="time")
+                elif aggregation_method == "min":
+                    data = data.min(dim="time")
+                elif aggregation_method == "sum":
+                    data = data.sum(dim="time")
+                else:
+                    raise ValueError(f"Unsupported aggregation: {aggregation_method}")
+            else:
+                data = data.isel(time=0)
+        elif isinstance(time_index, str):
+            data = data.sel(time=time_index, method="nearest")
+        else:
+            data = data.isel(time=time_index)
+        return data
+
+    def _get_transform(self, x_coords: np.ndarray, y_coords: np.ndarray) -> tuple:
+        """Calculate transform for GeoTIFF.
+
+        Parameters
+        ----------
+        x_coords : np.ndarray
+            X coordinates
+        y_coords : np.ndarray
+            Y coordinates
+
+        Returns:
+        -------
+        tuple
+            Transform matrix for GeoTIFF
+        """
+        x_res = x_coords[1] - x_coords[0]
+        y_res = y_coords[1] - y_coords[0]
+
+        return from_bounds(
+            x_coords[0] - x_res / 2,
+            y_coords[0] - y_res / 2,
+            x_coords[-1] + x_res / 2,
+            y_coords[-1] + y_res / 2,
+            len(x_coords),
+            len(y_coords),
+        )
+
+    def _get_crs(self) -> CRS:
+        """Get CRS from dataset or return default.
+
+        Returns:
+        -------
+        CRS
+            Coordinate reference system
+        """
+        if "crs" in self.dataset:
+            crs_wkt = self.dataset.crs.attrs.get("crs_wkt", "")
+            if crs_wkt:
+                try:
+                    return CRS.from_wkt(crs_wkt)
+                except Exception as e:
+                    logger.warning(
+                        f"Could not parse CRS from WKT ({e!s}), using EPSG:3035"
+                    )
+            return CRS.from_epsg(3035)  # Default LAEA Europe
+        return CRS.from_epsg(3035)  # Default LAEA Europe
+
     def to_geotiff(
         self,
-        output_path: Union[str, Path],
-        time_index: Union[int, str, slice] = 0,
-        aggregation_method: Optional[str] = None,
+        output_path: str | Path,
+        time_index: int | str | slice = 0,
+        aggregation_method: str | None = None,
         nodata_value: float = -9999.0,
         compress: str = "lzw",
         dtype: str = "float32",
     ) -> None:
-        """
-        Export data to GeoTIFF format.
+        """Export data to GeoTIFF format.
 
         Parameters
         ----------
@@ -114,61 +294,14 @@ class DataExporter:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Select data
-        data = self.dataset[self.pollution_variable]
-
-        if isinstance(time_index, slice):
-            data = data.sel(time=time_index)
-            if aggregation_method:
-                if aggregation_method == "mean":
-                    data = data.mean(dim="time")
-                elif aggregation_method == "max":
-                    data = data.max(dim="time")
-                elif aggregation_method == "min":
-                    data = data.min(dim="time")
-                elif aggregation_method == "sum":
-                    data = data.sum(dim="time")
-                else:
-                    raise ValueError(
-                        f"Unsupported aggregation method: {aggregation_method}"
-                    )
-            else:
-                # Take the first time step if no aggregation specified
-                data = data.isel(time=0)
-        elif isinstance(time_index, str):
-            data = data.sel(time=time_index, method="nearest")
-        else:
-            data = data.isel(time=time_index)
-
-        # Get spatial information
-        x_coords = data.x.values
-        y_coords = data.y.values
-
-        # Calculate transform
-        x_res = x_coords[1] - x_coords[0]
-        y_res = y_coords[1] - y_coords[0]
-
-        transform = from_bounds(
-            x_coords[0] - x_res / 2,
-            y_coords[0] - y_res / 2,
-            x_coords[-1] + x_res / 2,
-            y_coords[-1] + y_res / 2,
-            len(x_coords),
-            len(y_coords),
+        # Process data
+        data = self._get_time_subset_data(
+            self.dataset[self.pollution_variable], time_index, aggregation_method
         )
 
-        # Get CRS information
-        crs = None
-        if "crs" in self.dataset:
-            crs_wkt = self.dataset.crs.attrs.get("crs_wkt", "")
-            if crs_wkt:
-                try:
-                    crs = CRS.from_wkt(crs_wkt)
-                except:
-                    logger.warning("Could not parse CRS from WKT, using EPSG:3035")
-                    crs = CRS.from_epsg(3035)
-            else:
-                crs = CRS.from_epsg(3035)  # Default LAEA Europe
+        # Get spatial information
+        transform = self._get_transform(data.x.values, data.y.values)
+        crs = self._get_crs()
 
         # Prepare data array
         data_array = data.values
@@ -215,16 +348,16 @@ class DataExporter:
                 if data.time.size == 1:
                     metadata["time"] = pd.to_datetime(data.time.values).isoformat()
                 else:
-                    metadata["time_range"] = (
-                        f"{pd.to_datetime(data.time.values[0]).isoformat()} to {pd.to_datetime(data.time.values[-1]).isoformat()}"
-                    )
+                    start_time = pd.to_datetime(data.time.values[0]).isoformat()
+                    end_time = pd.to_datetime(data.time.values[-1]).isoformat()
+                    metadata["time_range"] = f"{start_time} to {end_time}"
                     if aggregation_method:
                         metadata["temporal_aggregation"] = aggregation_method
 
             # Add variable attributes
             if hasattr(data, "attrs"):
                 for key, value in data.attrs.items():
-                    if isinstance(value, (str, int, float)):
+                    if isinstance(value, str | int | float):
                         metadata[key] = str(value)
 
             dst.update_tags(**metadata)
@@ -233,13 +366,12 @@ class DataExporter:
 
     def to_csv(
         self,
-        output_path: Union[str, Path],
+        output_path: str | Path,
         include_coordinates: bool = True,
         time_format: str = "%Y-%m-%d",
-        spatial_aggregation: Optional[str] = None,
+        spatial_aggregation: str | None = None,
     ) -> None:
-        """
-        Export data to CSV format.
+        """Export data to CSV format.
 
         Parameters
         ----------
@@ -291,12 +423,11 @@ class DataExporter:
     def extracted_points_to_formats(
         self,
         extracted_data: xr.Dataset,
-        output_dir: Union[str, Path],
-        formats: List[str] = ["csv", "geojson"],
+        output_dir: str | Path,
+        formats: list[str] | None = None,
         base_filename: str = "extracted_points",
-    ) -> Dict[str, Path]:
-        """
-        Export extracted point data to multiple formats.
+    ) -> dict[str, Path]:
+        """Export extracted point data to multiple formats.
 
         Parameters
         ----------
@@ -309,11 +440,13 @@ class DataExporter:
         base_filename : str
             Base filename for outputs
 
-        Returns
+        Returns:
         -------
         dict
             Dictionary mapping format names to output file paths
         """
+        if formats is None:
+            formats = ["csv", "geojson"]
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -376,7 +509,7 @@ class DataExporter:
 
             geometry = [
                 Point(x, y)
-                for x, y in zip(x_coords, y_coords)
+                for x, y in zip(x_coords, y_coords, strict=False)
                 if x is not None and y is not None
             ]
 
@@ -393,7 +526,7 @@ class DataExporter:
 
             geometry = [
                 Point(x, y)
-                for x, y in zip(x_coords, y_coords)
+                for x, y in zip(x_coords, y_coords, strict=False)
                 if x is not None and y is not None
             ]
 
@@ -411,12 +544,11 @@ class DataExporter:
         self,
         extracted_data: xr.Dataset,
         original_polygons: gpd.GeoDataFrame,
-        output_dir: Union[str, Path],
-        formats: List[str] = ["csv", "geojson"],
+        output_dir: str | Path,
+        formats: list[str] | None = None,
         base_filename: str = "extracted_polygons",
-    ) -> Dict[str, Path]:
-        """
-        Export extracted polygon data to multiple formats.
+    ) -> dict[str, Path]:
+        """Export extracted polygon data to multiple formats.
 
         Parameters
         ----------
@@ -431,11 +563,13 @@ class DataExporter:
         base_filename : str
             Base filename for outputs
 
-        Returns
+        Returns:
         -------
         dict
             Dictionary mapping format names to output file paths
         """
+        if formats is None:
+            formats = ["csv", "geojson"]
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -510,12 +644,11 @@ class DataExporter:
     def time_series_to_formats(
         self,
         time_series_data: xr.Dataset,
-        output_dir: Union[str, Path],
-        formats: List[str] = ["csv"],
+        output_dir: str | Path,
+        formats: list[str] | None = None,
         base_filename: str = "time_series",
-    ) -> Dict[str, Path]:
-        """
-        Export time series data to multiple formats.
+    ) -> dict[str, Path]:
+        """Export time series data to multiple formats.
 
         Parameters
         ----------
@@ -528,11 +661,13 @@ class DataExporter:
         base_filename : str
             Base filename for outputs
 
-        Returns
+        Returns:
         -------
         dict
             Dictionary mapping format names to output file paths
         """
+        if formats is None:
+            formats = ["csv"]
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -556,10 +691,9 @@ class DataExporter:
         return output_paths
 
     def create_metadata_file(
-        self, output_path: Union[str, Path], processing_info: Dict[str, Any] = None
+        self, output_path: str | Path, processing_info: dict[str, Any] | None = None
     ) -> None:
-        """
-        Create a metadata file for the exported data.
+        """Create a metadata file for the exported data.
 
         Parameters
         ----------

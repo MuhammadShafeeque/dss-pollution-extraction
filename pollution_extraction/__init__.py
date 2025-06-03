@@ -1,16 +1,15 @@
-"""
-Pollution Data Extraction and Analysis Package
+"""Pollution Data Extraction and Analysis Package.
 
 A comprehensive package for analyzing pollution data from NetCDF files,
 including temporal aggregations, spatial extractions, and visualizations.
 """
 
-from .core.data_reader import PollutionDataReader
-from .core.temporal_aggregator import TemporalAggregator
-from .core.spatial_extractor import SpatialExtractor
-from .core.data_visualizer import DataVisualizer
-from .core.data_exporter import DataExporter
 from .analyzer import PollutionAnalyzer
+from .core.data_exporter import DataExporter
+from .core.data_reader import PollutionDataReader
+from .core.data_visualizer import DataVisualizer
+from .core.spatial_extractor import SpatialExtractor
+from .core.temporal_aggregator import TemporalAggregator
 
 __version__ = "1.0.0"
 __author__ = "Muhammad Shafeeque"
@@ -19,12 +18,12 @@ __institution__ = "Alfred Wegener Institute (AWI)"
 __license__ = "MIT"
 
 __all__ = [
-    "PollutionDataReader",
-    "TemporalAggregator",
-    "SpatialExtractor",
-    "DataVisualizer",
     "DataExporter",
+    "DataVisualizer",
     "PollutionAnalyzer",
+    "PollutionDataReader",
+    "SpatialExtractor",
+    "TemporalAggregator",
 ]
 
 # Package metadata
@@ -58,8 +57,7 @@ def get_supported_pollutants():
 
 
 def quick_analysis(file_path, pollution_type=None, output_dir="./output"):
-    """
-    Quick analysis function for basic pollution data analysis.
+    """Quick analysis function for basic pollution data analysis.
 
     Parameters
     ----------
@@ -70,7 +68,7 @@ def quick_analysis(file_path, pollution_type=None, output_dir="./output"):
     output_dir : str
         Output directory for results
 
-    Returns
+    Returns:
     -------
     PollutionAnalyzer
         Configured analyzer instance
@@ -86,9 +84,9 @@ def quick_analysis(file_path, pollution_type=None, output_dir="./output"):
 
 # Import error handling
 try:
-    import xarray as xr
-    import pandas as pd
     import numpy as np
+    import pandas as pd
+    import xarray as xr
 except ImportError as e:
     raise ImportError(
         f"Required dependency missing: {e}\n"
@@ -102,7 +100,9 @@ except ImportError:
     import warnings
 
     warnings.warn(
-        "Cartopy not available. Geographic projections will be limited.", ImportWarning
+        "Cartopy not available. Geographic projections will be limited.",
+        ImportWarning,
+        stacklevel=2,
     )
 
 try:
@@ -111,5 +111,7 @@ except ImportError:
     import warnings
 
     warnings.warn(
-        "GeoPandas not available. Spatial operations will be limited.", ImportWarning
+        "GeoPandas not available. Spatial operations will be limited.",
+        ImportWarning,
+        stacklevel=2,
     )

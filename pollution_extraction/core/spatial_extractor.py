@@ -1,32 +1,27 @@
-"""
-Spatial extraction module for pollution data.
-"""
+"""Spatial extraction module for pollution data."""
 
-import xarray as xr
-import pandas as pd
+import json
+import logging
+from pathlib import Path
+
 import geopandas as gpd
 import numpy as np
-import rioxarray as rxr
-from pathlib import Path
-from typing import Union, List, Dict, Optional, Tuple
-import logging
+import pandas as pd
+import xarray as xr
 from shapely.geometry import Point, Polygon
-import json
 
 logger = logging.getLogger(__name__)
 
 
 class SpatialExtractor:
-    """
-    Class for spatial extraction of pollution data.
+    """Class for spatial extraction of pollution data.
 
     Supports extraction using various spatial formats including shapefiles,
     GeoJSON, CSV with coordinates, and specific locations.
     """
 
     def __init__(self, dataset: xr.Dataset, pollution_variable: str):
-        """
-        Initialize the spatial extractor.
+        """Initialize the spatial extractor.
 
         Parameters
         ----------
@@ -57,10 +52,9 @@ class SpatialExtractor:
                 logger.warning(f"Could not set CRS information: {e}")
 
     def load_spatial_boundaries(
-        self, file_path: Union[str, Path], format_type: str = "auto"
+        self, file_path: str | Path, format_type: str = "auto"
     ) -> gpd.GeoDataFrame:
-        """
-        Load spatial boundaries from various file formats.
+        """Load spatial boundaries from various file formats.
 
         Parameters
         ----------
@@ -69,7 +63,7 @@ class SpatialExtractor:
         format_type : str
             Format type ('shapefile', 'geojson', 'csv', 'auto')
 
-        Returns
+        Returns:
         -------
         gpd.GeoDataFrame
             Loaded spatial boundaries
@@ -106,8 +100,7 @@ class SpatialExtractor:
         return format_map.get(suffix, "unknown")
 
     def _load_csv_with_coordinates(self, file_path: Path) -> gpd.GeoDataFrame:
-        """
-        Load CSV file with coordinate columns.
+        """Load CSV file with coordinate columns.
 
         Expected columns: 'lon', 'lat' or 'longitude', 'latitude' or 'x', 'y'
         """
@@ -127,14 +120,16 @@ class SpatialExtractor:
             )
 
         # Create geometry points
-        geometry = [Point(lon, lat) for lon, lat in zip(df[lon_col], df[lat_col])]
+        geometry = [
+            Point(lon, lat) for lon, lat in zip(df[lon_col], df[lat_col], strict=False)
+        ]
         gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
         return gdf
 
     def _load_json_coordinates(self, file_path: Path) -> gpd.GeoDataFrame:
         """Load JSON file with coordinate information."""
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
 
         # Handle different JSON structures
@@ -149,16 +144,19 @@ class SpatialExtractor:
                 # Single object or dict of objects
                 df = pd.DataFrame(
                     [data]
-                    if not isinstance(list(data.values())[0], dict)
+                    if not isinstance(next(iter(data.values())), dict)
                     else list(data.values())
                 )
 
         # Try to create geometries
         if "lon" in df.columns and "lat" in df.columns:
-            geometry = [Point(lon, lat) for lon, lat in zip(df["lon"], df["lat"])]
+            geometry = [
+                Point(lon, lat) for lon, lat in zip(df["lon"], df["lat"], strict=False)
+            ]
         elif "longitude" in df.columns and "latitude" in df.columns:
             geometry = [
-                Point(lon, lat) for lon, lat in zip(df["longitude"], df["latitude"])
+                Point(lon, lat)
+                for lon, lat in zip(df["longitude"], df["latitude"], strict=False)
             ]
         else:
             raise ValueError("Could not find coordinate columns in JSON")
@@ -168,12 +166,11 @@ class SpatialExtractor:
 
     def extract_points(
         self,
-        locations: Union[gpd.GeoDataFrame, List[Tuple[float, float]], str, Path],
+        locations: gpd.GeoDataFrame | list[tuple[float, float]] | str | Path,
         method: str = "nearest",
-        buffer_distance: Optional[float] = None,
+        buffer_distance: float | None = None,
     ) -> xr.Dataset:
-        """
-        Extract data at specific point locations.
+        """Extract data at specific point locations.
 
         Parameters
         ----------
@@ -184,22 +181,22 @@ class SpatialExtractor:
         buffer_distance : float, optional
             Buffer distance around points for aggregation
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted data at point locations
-        """        # Handle different input types
-        if isinstance(locations, (str, Path)):
+        """  # Handle different input types
+        if isinstance(locations, str | Path):
             gdf = self.load_spatial_boundaries(locations)
         elif isinstance(locations, list):
             # List of (x, y) tuples - assume they are in the same CRS as the dataset
             # Get the dataset's CRS or use a default
-            dataset_crs = getattr(self.dataset.rio, 'crs', None)
+            dataset_crs = getattr(self.dataset.rio, "crs", None)
             if dataset_crs is None:
                 # Assume LAEA projection for European data if no CRS info
                 dataset_crs = "EPSG:3035"
                 logger.warning(f"No CRS found in dataset, assuming {dataset_crs}")
-            
+
             gdf = gpd.GeoDataFrame(
                 {"id": range(len(locations))},
                 geometry=[Point(x, y) for x, y in locations],
@@ -209,11 +206,13 @@ class SpatialExtractor:
             gdf = locations.copy()
 
         # Ensure proper CRS - only transform if CRS are different and both are defined
-        if hasattr(self.dataset, 'rio') and self.dataset.rio.crs is not None:
+        if hasattr(self.dataset, "rio") and self.dataset.rio.crs is not None:
             if gdf.crs != self.dataset.rio.crs:
                 gdf = gdf.to_crs(self.dataset.rio.crs)
         else:
-            logger.warning("Dataset has no CRS information, assuming coordinates are in correct projection")
+            logger.warning(
+                "Dataset has no CRS information, assuming coordinates are in correct projection"
+            )
 
         results = []
 
@@ -224,24 +223,30 @@ class SpatialExtractor:
                 # Create buffer and aggregate
                 buffered = point.buffer(buffer_distance)
                 extracted = self._extract_polygon(buffered, method="mean")
-            else:                # Extract at exact point
+            else:  # Extract at exact point
                 x_coord = point.x
                 y_coord = point.y
 
                 # Validate coordinates are within dataset bounds
                 x_min, x_max = float(self.dataset.x.min()), float(self.dataset.x.max())
                 y_min, y_max = float(self.dataset.y.min()), float(self.dataset.y.max())
-                
+
                 if not (x_min <= x_coord <= x_max and y_min <= y_coord <= y_max):
-                    logger.warning(f"Point ({x_coord}, {y_coord}) is outside dataset bounds: "
-                                   f"x=[{x_min}, {x_max}], y=[{y_min}, {y_max}]")
+                    logger.warning(
+                        f"Point ({x_coord}, {y_coord}) is outside dataset bounds: "
+                        f"x=[{x_min}, {x_max}], y=[{y_min}, {y_max}]"
+                    )
                     # Create NaN result with same structure
                     extracted = self.dataset.isel(x=0, y=0) * np.nan
                 else:
                     try:
-                        extracted = self.dataset.sel(x=x_coord, y=y_coord, method=method)
+                        extracted = self.dataset.sel(
+                            x=x_coord, y=y_coord, method=method
+                        )
                     except (KeyError, ValueError) as e:
-                        logger.error(f"Failed to extract at point ({x_coord}, {y_coord}): {e}")
+                        logger.error(
+                            f"Failed to extract at point ({x_coord}, {y_coord}): {e}"
+                        )
                         # Create NaN result with same structure
                         extracted = self.dataset.isel(x=0, y=0) * np.nan
 
@@ -261,12 +266,11 @@ class SpatialExtractor:
 
     def extract_polygons(
         self,
-        polygons: Union[gpd.GeoDataFrame, str, Path],
+        polygons: gpd.GeoDataFrame | str | Path,
         aggregation_method: str = "mean",
         mask_and_scale: bool = True,
     ) -> xr.Dataset:
-        """
-        Extract data within polygon boundaries.
+        """Extract data within polygon boundaries.
 
         Parameters
         ----------
@@ -277,13 +281,13 @@ class SpatialExtractor:
         mask_and_scale : bool
             Whether to mask areas outside polygons
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted data for each polygon
         """
         # Handle different input types
-        if isinstance(polygons, (str, Path)):
+        if isinstance(polygons, str | Path):
             gdf = self.load_spatial_boundaries(polygons)
         else:
             gdf = polygons.copy()
@@ -365,10 +369,9 @@ class SpatialExtractor:
             return result
 
     def extract_nuts3_regions(
-        self, nuts3_file: Union[str, Path], aggregation_method: str = "mean"
+        self, nuts3_file: str | Path, aggregation_method: str = "mean"
     ) -> xr.Dataset:
-        """
-        Extract data for NUTS3 regions in Europe.
+        """Extract data for NUTS3 regions in Europe.
 
         Parameters
         ----------
@@ -377,7 +380,7 @@ class SpatialExtractor:
         aggregation_method : str
             Method for aggregating values within regions
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted data for each NUTS3 region
@@ -402,13 +405,12 @@ class SpatialExtractor:
 
     def extract_with_dates(
         self,
-        locations: Union[gpd.GeoDataFrame, str, Path],
+        locations: gpd.GeoDataFrame | str | Path,
         date_column: str = "date",
         days_before: int = 0,
         aggregation_method: str = "mean",
     ) -> xr.Dataset:
-        """
-        Extract data at locations for specific dates (with optional days before).
+        """Extract data at locations for specific dates (with optional days before).
 
         Parameters
         ----------
@@ -421,13 +423,13 @@ class SpatialExtractor:
         aggregation_method : str
             Method for temporal aggregation if days_before > 0
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Extracted data for each location and date
         """
         # Load locations
-        if isinstance(locations, (str, Path)):
+        if isinstance(locations, str | Path):
             gdf = self.load_spatial_boundaries(locations)
         else:
             gdf = locations.copy()
@@ -487,16 +489,15 @@ class SpatialExtractor:
         combined = xr.concat(results, dim="location_id")
         return combined
 
-    def spatial_subset(self, bounds: Dict[str, float]) -> xr.Dataset:
-        """
-        Extract data for a bounding box.
+    def spatial_subset(self, bounds: dict[str, float]) -> xr.Dataset:
+        """Extract data for a bounding box.
 
         Parameters
         ----------
         bounds : dict
             Bounding box with keys 'minx', 'miny', 'maxx', 'maxy'
 
-        Returns
+        Returns:
         -------
         xr.Dataset
             Spatially subset dataset

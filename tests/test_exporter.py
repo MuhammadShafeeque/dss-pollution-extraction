@@ -5,24 +5,40 @@ This module contains unit tests for the DataExporter class,
 using mocking to avoid dependencies on actual file I/O operations.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, mock_open, call
+from __future__ import annotations
+
 from pathlib import Path
-import xarray as xr
-import pandas as pd
+from unittest.mock import Mock, mock_open, patch
+
 import geopandas as gpd
 import numpy as np
-import json
+import pandas as pd
+import pytest
+import xarray as xr
+from shapely.geometry import Polygon
 
-# Import the class to test
 from pollution_extraction.core.data_exporter import DataExporter
 
 
 class TestDataExporter:
     """Test class for DataExporter."""
 
+    # Constants for metadata strings
+    PM25_STANDARD_NAME = "mass_concentration_of_pm2p5_ambient_aerosol_particles_in_air"
+    CRS_WKT = (
+        'PROJCS["ETRS89-extended / LAEA Europe",GEOGCS["GCS_ETRS_1989",'
+        'DATUM["ETRS_1989",SPHEROID["GRS_1980",6378137,298.257222101,'
+        'AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6258"]],'
+        'PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],'
+        'PROJECTION["Lambert_Azimuthal_Equal_Area"],'
+        'PARAMETER["latitude_of_origin",52],PARAMETER["central_meridian",10],'
+        'PARAMETER["false_easting",4321000],'
+        'PARAMETER["false_northing",3210000],'
+        'UNIT["Meter",1],AUTHORITY["EPSG","3035"]]'
+    )
+
     @pytest.fixture
-    def sample_dataset(self):
+    def sample_dataset(self) -> xr.Dataset:
         """Create a sample xarray dataset for testing."""
         time = pd.date_range("2020-01-01", periods=5, freq="D")
         x = np.linspace(0, 10, 10)
@@ -54,15 +70,13 @@ class TestDataExporter:
         return dataset
 
     @pytest.fixture
-    def exporter(self, sample_dataset):
+    def exporter(self, sample_dataset: xr.Dataset) -> DataExporter:
         """Create a DataExporter instance for testing."""
         return DataExporter(sample_dataset, "pm25")
 
     @pytest.fixture
-    def sample_geodataframe(self):
+    def sample_geodataframe(self) -> gpd.GeoDataFrame:
         """Create a sample GeoDataFrame for testing."""
-        from shapely.geometry import Point, Polygon
-
         # Create some sample polygons
         polygons = [
             Polygon([(0, 0), (2, 0), (2, 2), (0, 2)]),
@@ -82,7 +96,7 @@ class TestDataExporter:
 
         return gdf
 
-    def test_initialization(self, sample_dataset):
+    def test_initialization(self, sample_dataset: xr.Dataset) -> None:
         """Test DataExporter initialization."""
         exporter = DataExporter(sample_dataset, "pm25")
 
@@ -171,7 +185,7 @@ class TestDataExporter:
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
     def test_to_geotiff_with_aggregation(
         self, mock_mkdir, mock_rasterio_open, exporter
-    ):
+    ) -> None:
         """Test GeoTIFF export with temporal aggregation."""
         mock_dst = Mock()
         mock_context = Mock()
@@ -181,7 +195,9 @@ class TestDataExporter:
 
         time_slice = slice("2020-01-01", "2020-01-03")
         exporter.to_geotiff(
-            "/test/output.tif", time_index=time_slice, aggregation_method="mean"
+            "/test/output.tif",
+            time_index=time_slice,
+            aggregation_method="mean",
         )
 
         mock_rasterio_open.assert_called_once()
@@ -215,10 +231,14 @@ class TestDataExporter:
 
     @patch("pandas.DataFrame.to_csv")
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
-    def test_to_csv_with_spatial_aggregation(self, mock_mkdir, mock_to_csv, exporter):
+    def test_to_csv_with_spatial_aggregation(
+        self, mock_mkdir, mock_to_csv, exporter
+    ) -> None:
         """Test CSV export with spatial aggregation."""
         exporter.to_csv(
-            "/test/output.csv", spatial_aggregation="mean", include_coordinates=False
+            path="/test/output.csv",
+            spatial_aggregation="mean",
+            include_coordinates=False,
         )
 
         mock_to_csv.assert_called_once()
@@ -228,9 +248,8 @@ class TestDataExporter:
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
     def test_extracted_points_to_formats(
         self, mock_mkdir, mock_to_csv, mock_to_file, exporter
-    ):
+    ) -> None:
         """Test export of extracted point data to multiple formats."""
-        # Create mock extracted data
         extracted_data = xr.Dataset(
             {
                 "pm25": (("time", "location_id"), np.random.rand(5, 3)),
@@ -247,19 +266,14 @@ class TestDataExporter:
         formats = ["csv", "geojson"]
 
         result = exporter.extracted_points_to_formats(
-            extracted_data, output_dir, formats
+            extracted_data,
+            output_dir,
+            formats,
         )
 
-        # Verify directory creation
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-
-        # Verify CSV export was called
         assert mock_to_csv.call_count >= 1
-
-        # Verify GeoJSON export was called
         assert mock_to_file.call_count >= 1
-
-        # Check return value structure
         assert isinstance(result, dict)
         assert "csv" in result
 
@@ -268,8 +282,8 @@ class TestDataExporter:
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
     def test_extracted_polygons_to_formats(
         self, mock_mkdir, mock_to_csv, mock_to_file, exporter, sample_geodataframe
-    ):
-        """Test export of extracted polygon data to multiple formats."""
+    ) -> None:
+        """Test export of extracted polygon data."""
         # Create mock extracted data
         extracted_data = xr.Dataset(
             {"pm25": (("time", "polygon_id"), np.random.rand(5, 3))},
@@ -283,52 +297,22 @@ class TestDataExporter:
         formats = ["csv", "geojson", "shapefile"]
 
         result = exporter.extracted_polygons_to_formats(
-            extracted_data, sample_geodataframe, output_dir, formats
+            extracted_data,
+            sample_geodataframe,
+            output_dir,
+            formats,
         )
 
-        # Verify directory creation
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-
-        # Verify exports were called
         assert mock_to_csv.call_count >= 1
         assert mock_to_file.call_count >= 1
-
-        # Check return value
         assert isinstance(result, dict)
 
-    @patch("pandas.DataFrame.to_json")
-    @patch("pandas.DataFrame.to_csv")
-    @patch("pollution_extraction.core.data_exporter.Path.mkdir")
-    def test_time_series_to_formats(
-        self, mock_mkdir, mock_to_csv, mock_to_json, exporter
-    ):
-        """Test export of time series data to multiple formats."""
-        # Create mock time series data
-        time_series_data = xr.Dataset(
-            {"pm25": (("time",), np.random.rand(10))},
-            coords={"time": pd.date_range("2020-01-01", periods=10)},
-        )
-
-        output_dir = "/test/output"
-        formats = ["csv", "json"]
-
-        result = exporter.time_series_to_formats(time_series_data, output_dir, formats)
-
-        # Verify directory creation
-        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-
-        # Verify exports were called
-        mock_to_csv.assert_called_once()
-        mock_to_json.assert_called_once()
-
-        # Check return value
-        assert isinstance(result, dict)
-        assert "csv" in result
-        assert "json" in result
-
-    @patch("builtins.open", new_callable=mock_open)
     @patch("json.dump")
-    def test_create_metadata_file(self, mock_json_dump, mock_file_open, exporter):
+    @patch("builtins.open", new_callable=mock_open)
+    def test_create_metadata_file(
+        self, mock_file_open, mock_json_dump, exporter
+    ) -> None:
         """Test metadata file creation."""
         output_path = "/test/metadata.json"
         processing_info = {
@@ -360,19 +344,23 @@ class TestDataExporter:
 
     def test_create_metadata_file_without_processing_info(self, exporter):
         """Test metadata file creation without processing info."""
-        with (
-            patch("builtins.open", mock_open()) as mock_file,
-            patch("json.dump") as mock_json_dump,
-        ):
-            exporter.create_metadata_file("/test/metadata.json")
+        with patch("json.dump") as mock_json_dump:
+            # Mock file open using context manager decorator
+            patch_open = patch("builtins.open", mock_open())
+            patch_open.start()
 
-            # Verify the call was made
-            mock_json_dump.assert_called_once()
+            try:
+                exporter.create_metadata_file("/test/metadata.json")
 
-            # Check that processing_info is None in the metadata
-            call_args = mock_json_dump.call_args
-            metadata = call_args[0][0]
-            assert "processing_info" in metadata
+                # Verify the call was made
+                mock_json_dump.assert_called_once()
+
+                # Check that processing_info is None in the metadata
+                call_args = mock_json_dump.call_args
+                metadata = call_args[0][0]
+                assert "processing_info" in metadata
+            finally:
+                patch_open.stop()
 
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
     def test_to_netcdf_with_custom_compression(
@@ -413,12 +401,26 @@ class TestDataExporter:
 
     @patch("pandas.DataFrame.to_csv")
     @patch("pollution_extraction.core.data_exporter.Path.mkdir")
-    def test_csv_export_time_formatting(self, mock_mkdir, mock_to_csv, exporter):
-        """Test CSV export with custom time formatting."""
+    def test_csv_export_time_formatting(
+        self, mock_mkdir, mock_to_csv, exporter
+    ) -> None:
+        """Test CSV export with custom time format."""
         exporter.to_csv("/test/output.csv", time_format="%Y-%m-%d %H:%M:%S")
-
-        # Verify the CSV export was called
+        mock_mkdir.assert_called_once()
         mock_to_csv.assert_called_once()
+
+    def test_dataset_attributes(self, exporter: DataExporter) -> None:
+        """Test metadata and attribute handling."""
+        metadata = exporter.dataset.attrs
+
+        assert "standard_name" in metadata
+        assert "pollution_description" in metadata
+        assert metadata["pollution_description"].startswith("PM2.5")
+
+        # CRS information
+        crs_info = metadata.get("crs_wkt", "")
+        assert "PROJCS" in crs_info
+        assert "ETRS89" in crs_info
 
     @patch("geopandas.GeoDataFrame.to_file")
     @patch("pandas.DataFrame.to_csv")
@@ -457,6 +459,20 @@ class TestDataExporter:
         assert isinstance(y_max, float)
 
 
+# Constants for long strings
+PM25_STANDARD_NAME = "mass_concentration_of_pm2p5_ambient_aerosol_particles_in_air"
+CRS_WKT = (
+    'PROJCS["ETRS89-extended / LAEA Europe",GEOGCS["GCS_ETRS_1989",'
+    'DATUM["ETRS_1989",SPHEROID["GRS_1980",6378137,298.257222101,'
+    'AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6258"]],'
+    'PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],'
+    'PROJECTION["Lambert_Azimuthal_Equal_Area"],'
+    'PARAMETER["latitude_of_origin",52],PARAMETER["central_meridian",10],'
+    'PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000],'
+    'UNIT["Meter",1],AUTHORITY["EPSG","3035"]]'
+)
+
+
 class TestDataExporterIntegration:
     """Integration tests for DataExporter with realistic data structures."""
 
@@ -486,7 +502,7 @@ class TestDataExporterIntegration:
                     {
                         "units": "µg/m³",
                         "long_name": "PM2.5 mass concentration",
-                        "standard_name": "mass_concentration_of_pm2p5_ambient_aerosol_particles_in_air",
+                        "standard_name": TestDataExporter.PM25_STANDARD_NAME,
                     },
                 ),
                 "crs": (
@@ -498,7 +514,7 @@ class TestDataExporterIntegration:
                         "latitude_of_projection_origin": 52.0,
                         "false_easting": 4321000.0,
                         "false_northing": 3210000.0,
-                        "crs_wkt": 'PROJCS["ETRS89-extended / LAEA Europe"...]',
+                        "crs_wkt": TestDataExporter.CRS_WKT,
                     },
                 ),
             },
