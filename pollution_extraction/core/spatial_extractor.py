@@ -188,23 +188,32 @@ class SpatialExtractor:
         -------
         xr.Dataset
             Extracted data at point locations
-        """
-        # Handle different input types
+        """        # Handle different input types
         if isinstance(locations, (str, Path)):
             gdf = self.load_spatial_boundaries(locations)
         elif isinstance(locations, list):
-            # List of (lon, lat) tuples
+            # List of (x, y) tuples - assume they are in the same CRS as the dataset
+            # Get the dataset's CRS or use a default
+            dataset_crs = getattr(self.dataset.rio, 'crs', None)
+            if dataset_crs is None:
+                # Assume LAEA projection for European data if no CRS info
+                dataset_crs = "EPSG:3035"
+                logger.warning(f"No CRS found in dataset, assuming {dataset_crs}")
+            
             gdf = gpd.GeoDataFrame(
                 {"id": range(len(locations))},
-                geometry=[Point(lon, lat) for lon, lat in locations],
-                crs="EPSG:4326",
+                geometry=[Point(x, y) for x, y in locations],
+                crs=dataset_crs,
             )
         else:
             gdf = locations.copy()
 
-        # Ensure proper CRS
-        if gdf.crs != self.dataset.rio.crs:
-            gdf = gdf.to_crs(self.dataset.rio.crs)
+        # Ensure proper CRS - only transform if CRS are different and both are defined
+        if hasattr(self.dataset, 'rio') and self.dataset.rio.crs is not None:
+            if gdf.crs != self.dataset.rio.crs:
+                gdf = gdf.to_crs(self.dataset.rio.crs)
+        else:
+            logger.warning("Dataset has no CRS information, assuming coordinates are in correct projection")
 
         results = []
 
@@ -215,12 +224,26 @@ class SpatialExtractor:
                 # Create buffer and aggregate
                 buffered = point.buffer(buffer_distance)
                 extracted = self._extract_polygon(buffered, method="mean")
-            else:
-                # Extract at exact point
+            else:                # Extract at exact point
                 x_coord = point.x
                 y_coord = point.y
 
-                extracted = self.dataset.sel(x=x_coord, y=y_coord, method=method)
+                # Validate coordinates are within dataset bounds
+                x_min, x_max = float(self.dataset.x.min()), float(self.dataset.x.max())
+                y_min, y_max = float(self.dataset.y.min()), float(self.dataset.y.max())
+                
+                if not (x_min <= x_coord <= x_max and y_min <= y_coord <= y_max):
+                    logger.warning(f"Point ({x_coord}, {y_coord}) is outside dataset bounds: "
+                                   f"x=[{x_min}, {x_max}], y=[{y_min}, {y_max}]")
+                    # Create NaN result with same structure
+                    extracted = self.dataset.isel(x=0, y=0) * np.nan
+                else:
+                    try:
+                        extracted = self.dataset.sel(x=x_coord, y=y_coord, method=method)
+                    except (KeyError, ValueError) as e:
+                        logger.error(f"Failed to extract at point ({x_coord}, {y_coord}): {e}")
+                        # Create NaN result with same structure
+                        extracted = self.dataset.isel(x=0, y=0) * np.nan
 
             # Add location identifier
             extracted.coords["location_id"] = idx

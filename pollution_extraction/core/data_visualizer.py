@@ -66,6 +66,14 @@ class DataVisualizer:
         plt.style.use("seaborn-v0_8")
         sns.set_palette("husl")
 
+    def _maybe_invert_yaxis(self, ax, data):
+        """
+        Invert y-axis if y-coordinates are descending (to match imshow origin='upper').
+        """
+        y = data.y.values if hasattr(data, "y") else None
+        if y is not None and len(y) > 1 and y[0] > y[-1]:
+            ax.invert_yaxis()
+
     def plot_spatial_map(
         self,
         time_index: Union[int, str] = 0,
@@ -76,7 +84,7 @@ class DataVisualizer:
         vmin: Optional[float] = None,
         vmax: Optional[float] = None,
         projection: Optional[Any] = None,
-    ) -> plt.Figure:
+    ):
         """
         Create a spatial map of pollution data.
 
@@ -130,6 +138,9 @@ class DataVisualizer:
             vmax=vmax,
             transform=ccrs.PlateCarree() if projection else None,
         )
+        # Invert y-axis if needed for correct orientation
+        if not projection:
+            self._maybe_invert_yaxis(ax, data)
 
         # Set title
         if title is None:
@@ -408,7 +419,7 @@ class DataVisualizer:
         figsize: Tuple[int, int] = (12, 8),
         title: Optional[str] = None,
         save_path: Optional[Union[str, Path]] = None,
-    ) -> plt.Figure:
+    ):
         """
         Create a spatial map of temporal statistics.
 
@@ -446,6 +457,8 @@ class DataVisualizer:
         fig, ax = plt.subplots(figsize=figsize)
 
         im = stat_data.plot(ax=ax, cmap=self.cmap, add_colorbar=True)
+        # Invert y-axis if needed for correct orientation
+        self._maybe_invert_yaxis(ax, stat_data)
 
         if title is None:
             title = f"Temporal {statistic.title()} - {self.pollution_variable.replace('_', ' ').title()}"

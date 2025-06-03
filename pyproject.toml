@@ -1,14 +1,221 @@
-[project]
-name = "dss-pollution-extraction"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-authors = [
-    { name = "MuhammadShafeeque", email = "120993860+MuhammadShafeeque@users.noreply.github.com" }
-]
-requires-python = ">=3.13"
-dependencies = []
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project]
+name = "dss-pollution-extraction"
+version = "1.0.0"
+description = "A comprehensive package for analyzing pollution data from NetCDF files"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    { name = "Muhammad Shafeeque", email = "muhammad.shafeeque@awi.de" }
+]
+maintainers = [
+    { name = "Muhammad Shafeeque", email = "shafeequ@uni-bremen.de" }
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+]
+keywords = [
+    "pollution",
+    "air quality",
+    "atmospheric science",
+    "netcdf",
+    "xarray", 
+    "geospatial",
+    "environmental data",
+    "PM2.5",
+    "NO2",
+    "black carbon",
+    "data analysis",
+    "visualization",
+    "GIS",
+    "decision support system",
+    "DSS",
+    "environmental monitoring",
+    "temporal analysis",
+    "spatial analysis",
+    "NUTS3",
+    "Europe",
+    "LAEA",
+    "downscaling",
+    "AWI",
+    "climate data",
+]
+dependencies = [
+    "xarray>=2022.3.0",
+    "pandas>=1.4.0",
+    "numpy>=1.21.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "geopandas>=0.10.0",
+    "rioxarray>=0.11.0",
+    "rasterio>=1.2.0",
+    "shapely>=1.8.0",
+    "cartopy>=0.20.0",
+    "scikit-learn>=1.0.0",
+    "scipy>=1.8.0",
+    "dask>=2022.1.0",
+    "netcdf4>=1.5.0",
+    "pyproj>=3.3.0",
+    "h5netcdf>=1.6.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "isort>=5.10.0",
+    "mypy>=0.950",
+    "pre-commit>=2.17.0",
+]
+docs = [
+    "sphinx>=4.5.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "nbsphinx>=0.8.0",
+    "sphinx-autoapi>=1.8.0",
+]
+jupyter = [
+    "jupyter>=1.0.0",
+    "ipywidgets>=7.7.0",
+    "folium>=0.12.0",
+    "plotly>=5.7.0",
+]
+performance = [
+    "numba>=0.56.0",
+    "bottleneck>=1.3.0",
+    "cython>=0.29.0",
+]
+all = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "isort>=5.10.0",
+    "mypy>=0.950",
+    "pre-commit>=2.17.0",
+    "sphinx>=4.5.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "nbsphinx>=0.8.0",
+    "sphinx-autoapi>=1.8.0",
+    "jupyter>=1.0.0",
+    "ipywidgets>=7.7.0",
+    "folium>=0.12.0",
+    "plotly>=5.7.0",
+    "numba>=0.56.0",
+    "bottleneck>=1.3.0",
+    "cython>=0.29.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
+Documentation = "https://dss-pollution-extraction.readthedocs.io/"
+Repository = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
+"Bug Tracker" = "https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues"
+Download = "https://pypi.org/project/dss-pollution-extraction/"
+
+[project.scripts]
+dss-pollution-analyze = "pollution_extraction.cli:main"
+pollution-analyze = "pollution_extraction.cli:main"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/pollution_extraction",
+    "/config",
+    "/examples",
+    "/tests",
+    "/docs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "CITATION.cff",
+    "requirements*.txt",
+    "tox.ini",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["pollution_extraction"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["pollution_extraction"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["pollution_extraction"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true

@@ -8,6 +8,8 @@ import geopandas as gpd
 from pathlib import Path
 from typing import Union, List, Dict, Optional, Tuple, Any
 import logging
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from .core.data_reader import PollutionDataReader
 from .core.temporal_aggregator import TemporalAggregator
@@ -315,25 +317,25 @@ class PollutionAnalyzer:
         )
 
     # Visualization Methods
-    def plot_map(self, time_index: Union[int, str] = 0, **kwargs) -> plt.Figure:
+    def plot_map(self, time_index: Union[int, str] = 0, **kwargs) -> Figure:
         """Create a spatial map."""
         return self.visualizer.plot_spatial_map(time_index=time_index, **kwargs)
 
     def plot_time_series(
         self, location: Optional[Dict[str, float]] = None, **kwargs
-    ) -> plt.Figure:
+    ) -> Figure:
         """Create a time series plot."""
         return self.visualizer.plot_time_series(location=location, **kwargs)
 
-    def plot_seasonal_cycle(self, **kwargs) -> plt.Figure:
+    def plot_seasonal_cycle(self, **kwargs) -> Figure:
         """Create a seasonal cycle plot."""
         return self.visualizer.plot_seasonal_cycle(**kwargs)
 
-    def plot_distribution(self, **kwargs) -> plt.Figure:
+    def plot_distribution(self, **kwargs) -> Figure:
         """Create a distribution plot."""
         return self.visualizer.plot_distribution(**kwargs)
 
-    def plot_spatial_statistics(self, statistic: str = "mean", **kwargs) -> plt.Figure:
+    def plot_spatial_statistics(self, statistic: str = "mean", **kwargs) -> Figure:
         """Create a spatial statistics map."""
         return self.visualizer.plot_spatial_statistics(statistic=statistic, **kwargs)
 
@@ -554,4 +556,4 @@ class PollutionAnalyzer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-    
+
