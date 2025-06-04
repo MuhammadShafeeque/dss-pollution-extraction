@@ -11,7 +11,7 @@ from .core.data_visualizer import DataVisualizer
 from .core.spatial_extractor import SpatialExtractor
 from .core.temporal_aggregator import TemporalAggregator
 
-__version__ = "1.0.0"
+__version__ = "1.0.3"
 __author__ = "Muhammad Shafeeque"
 __email__ = "muhammad.shafeeque@awi.de"
 __institution__ = "Alfred Wegener Institute (AWI)"
