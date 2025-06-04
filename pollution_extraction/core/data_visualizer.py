@@ -86,7 +86,6 @@ class DataVisualizer:
         vmin: float | None = None,
         vmax: float | None = None,
         origin: str = "upper",
-        cmap: str | None = None,
     ) -> Figure | None:
         """Create a spatial map of pollution data.
 
@@ -106,9 +105,6 @@ class DataVisualizer:
             Color scale limits
         origin : str
             Origin parameter for imshow ('upper' or 'lower')
-        cmap : str, optional
-            Colormap name. If None, uses the default colormap for the pollution
-            type
 
         Returns
         -------
@@ -129,9 +125,6 @@ class DataVisualizer:
             logger.warning("All data values are NaN for the selected time index")
             return None
 
-        # Use provided cmap or fall back to default
-        colormap = cmap if cmap is not None else self.cmap
-
         # Print debug information
         print(f"Data shape: {data.shape}")
         print(f"Data range: {data.min().values} to {data.max().values}")
@@ -151,7 +144,7 @@ class DataVisualizer:
         try:
             im = data.plot(
                 ax=ax,
-                cmap=colormap,
+                cmap=self.cmap,
                 add_colorbar=show_colorbar,
                 vmin=vmin,
                 vmax=vmax,
@@ -165,14 +158,14 @@ class DataVisualizer:
             if hasattr(data, "x") and hasattr(data, "y"):
                 # Use pcolormesh for better control
                 im = ax.pcolormesh(
-                    data.x, data.y, data.values, cmap=colormap, vmin=vmin, vmax=vmax
+                    data.x, data.y, data.values, cmap=self.cmap, vmin=vmin, vmax=vmax
                 )
                 # Apply y-axis orientation fix for pcolormesh
                 self._maybe_invert_yaxis(ax, data)
             else:
                 # Use imshow as last resort with origin parameter
                 im = ax.imshow(
-                    data.values, cmap=colormap, vmin=vmin, vmax=vmax, origin=origin
+                    data.values, cmap=self.cmap, vmin=vmin, vmax=vmax, origin=origin
                 )
                 # Note: imshow origin parameter handles orientation, so no need to invert
 
@@ -499,55 +492,174 @@ class DataVisualizer:
 
     def create_animation(
         self,
-        output_path: str | Path,
+        output_path: str | Path | None = None,
         time_step: int = 1,
         fps: int = 5,
         dpi: int = 100,
-    ) -> None:
-        """Create an animation of the spatial data over time."""
+        figsize: tuple[int, int] = (10, 8),
+        vmin: float | None = None,
+        vmax: float | None = None,
+        interval: int = 400,
+        return_html: bool = False,
+        origin: str = "upper",
+        title_template: str = "{var_title} - Day {frame}",
+        clip_min: float | None = None,
+        **plot_kwargs,
+    ):
+        """Create an animation of the spatial data over time.
+
+        Parameters
+        ----------
+        output_path : str or Path, optional
+            Path to save animation file. If None and return_html=False,
+            animation is displayed but not saved.
+        time_step : int
+            Step size for time dimension
+        fps : int
+            Frames per second for saved animation
+        dpi : int
+            DPI for saved animation
+        figsize : tuple
+            Figure size (width, height)
+        vmin, vmax : float, optional
+            Color scale limits. If None, computed from data.
+        interval : int
+            Delay between frames in milliseconds
+        return_html : bool
+            If True, return HTML object for Jupyter display
+        origin : str
+            Origin parameter for imshow ('upper' or 'lower')
+        title_template : str
+            Template for frame titles. Available variables: {var_title}, {frame}, {date}
+        clip_min : float, optional
+            Minimum value to clip data to
+        **plot_kwargs
+            Additional arguments passed to plotting function
+
+        Returns
+        -------
+        HTML object (if return_html=True) or matplotlib animation object
+
+        """
         try:
             from matplotlib.animation import FuncAnimation
 
             data = self.dataset[self.pollution_variable]
 
+            # Apply clipping if specified
+            if clip_min is not None:
+                data = data.clip(min=clip_min)
+
             # Set up the figure and axis
-            fig, ax = plt.subplots(figsize=(10, 8))
+            fig, ax = plt.subplots(figsize=figsize)
 
             # Get data range for consistent color scale
-            vmin = float(data.min())
-            vmax = float(data.max())
+            if vmin is None:
+                vmin = float(data.min())
+            if vmax is None:
+                vmax = float(data.max())
 
-            def animate(frame):
-                ax.clear()
-                time_data = data.isel(time=frame * time_step)
+            # Create initial plot
+            first_frame = data.isel(time=0)
 
-                im = time_data.plot(
-                    ax=ax, cmap=self.cmap, vmin=vmin, vmax=vmax, add_colorbar=False
+            # Choose plotting method based on data structure
+            if hasattr(first_frame, "x") and hasattr(first_frame, "y"):
+                # Use xarray plotting for coordinate-aware data
+                im = first_frame.plot(
+                    ax=ax,
+                    cmap=self.cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    add_colorbar=True,
+                    **plot_kwargs,
                 )
-
-                # Apply y-axis orientation fix
-                self._maybe_invert_yaxis(ax, time_data)
-
-                time_str = pd.to_datetime(time_data.time.values).strftime("%Y-%m-%d")
-                var_title = self.pollution_variable.replace("_", " ").title()
-                ax.set_title(
-                    f"{var_title} - {time_str}",
-                    fontsize=14,
-                    fontweight="bold",
+            else:
+                # Fallback to imshow
+                im = ax.imshow(
+                    first_frame.values,
+                    cmap=self.cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    origin=origin,
+                    **plot_kwargs,
                 )
+                cbar = plt.colorbar(im, ax=ax)
+                var_label = self.pollution_variable.replace("_", " ").title()
+                cbar.set_label(f"{var_label} Concentration", fontsize=12)
 
-                return [im]
+            # Prepare title variables
+            var_title = self.pollution_variable.replace("_", " ").title()
+
+            def animate(frame_idx):
+                """Animation function for each frame."""
+                actual_time_idx = frame_idx * time_step
+                time_data = data.isel(time=actual_time_idx)
+
+                if hasattr(time_data, "x") and hasattr(time_data, "y"):
+                    # For xarray plots, we need to clear and replot
+                    ax.clear()
+                    time_data.plot(
+                        ax=ax,
+                        cmap=self.cmap,
+                        vmin=vmin,
+                        vmax=vmax,
+                        add_colorbar=False,
+                        **plot_kwargs,
+                    )
+                else:
+                    # For imshow, just update the array
+                    im.set_array(time_data.values)
+
+                # Format title with available variables
+                try:
+                    date_str = pd.to_datetime(time_data.time.values).strftime(
+                        "%Y-%m-%d"
+                    )
+                except:
+                    date_str = f"Time {actual_time_idx}"
+
+                title = title_template.format(
+                    var_title=var_title, frame=actual_time_idx + 1, date=date_str
+                )
+                ax.set_title(title, fontsize=14, fontweight="bold")
+
+                if hasattr(time_data, "x") and hasattr(time_data, "y"):
+                    ax.set_xlabel("X Coordinate (m)", fontsize=12)
+                    ax.set_ylabel("Y Coordinate (m)", fontsize=12)
+
+                return (
+                    [ax]
+                    if hasattr(time_data, "x") and hasattr(time_data, "y")
+                    else [im]
+                )
 
             # Create animation
             frames = len(data.time) // time_step
-            anim = FuncAnimation(fig, animate, frames=frames, blit=False, repeat=True)
+            anim = FuncAnimation(
+                fig, animate, frames=frames, interval=interval, blit=False, repeat=True
+            )
 
-            # Save animation
-            anim.save(output_path, fps=fps, dpi=dpi, writer="pillow")
-            logger.info(f"Animation saved to {output_path}")
+            # Handle output options
+            if return_html:
+                try:
+                    from IPython.display import HTML
 
-            plt.close(fig)
+                    plt.close(fig)  # Prevent duplicate static image
+                    return HTML(anim.to_jshtml())
+                except ImportError:
+                    logger.warning(
+                        "IPython not available. Returning animation object instead."
+                    )
+                    return anim
 
-        except ImportError:
-            logger.error("Animation requires matplotlib with pillow or ffmpeg")
+            if output_path:
+                # Save animation to file
+                anim.save(output_path, fps=fps, dpi=dpi, writer="pillow")
+                logger.info(f"Animation saved to {output_path}")
+                plt.close(fig)
+
+            return anim
+
+        except ImportError as e:
+            logger.error(f"Animation requires additional packages: {e}")
             raise
