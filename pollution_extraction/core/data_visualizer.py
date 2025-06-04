@@ -86,6 +86,7 @@ class DataVisualizer:
         vmin: float | None = None,
         vmax: float | None = None,
         origin: str = "upper",
+        cmap: str | None = None,
     ) -> Figure | None:
         """Create a spatial map of pollution data.
 
@@ -105,6 +106,9 @@ class DataVisualizer:
             Color scale limits
         origin : str
             Origin parameter for imshow ('upper' or 'lower')
+        cmap : str, optional
+            Colormap name. If None, uses the default colormap for the pollution
+            type
 
         Returns
         -------
@@ -125,6 +129,9 @@ class DataVisualizer:
             logger.warning("All data values are NaN for the selected time index")
             return None
 
+        # Use provided cmap or fall back to default
+        colormap = cmap if cmap is not None else self.cmap
+
         # Print debug information
         print(f"Data shape: {data.shape}")
         print(f"Data range: {data.min().values} to {data.max().values}")
@@ -144,13 +151,12 @@ class DataVisualizer:
         try:
             im = data.plot(
                 ax=ax,
-                cmap=self.cmap,
+                cmap=colormap,
                 add_colorbar=show_colorbar,
                 vmin=vmin,
                 vmax=vmax,
             )
-            # Apply y-axis orientation fix
-            self._maybe_invert_yaxis(ax, data)
+            # Don't invert - xarray.plot() handles coordinates correctly
         except Exception as e:
             logger.error(f"Error plotting data with xarray.plot(): {e}")
             print("Falling back to manual plotting method...")
@@ -159,14 +165,14 @@ class DataVisualizer:
             if hasattr(data, "x") and hasattr(data, "y"):
                 # Use pcolormesh for better control
                 im = ax.pcolormesh(
-                    data.x, data.y, data.values, cmap=self.cmap, vmin=vmin, vmax=vmax
+                    data.x, data.y, data.values, cmap=colormap, vmin=vmin, vmax=vmax
                 )
                 # Apply y-axis orientation fix for pcolormesh
                 self._maybe_invert_yaxis(ax, data)
             else:
                 # Use imshow as last resort with origin parameter
                 im = ax.imshow(
-                    data.values, cmap=self.cmap, vmin=vmin, vmax=vmax, origin=origin
+                    data.values, cmap=colormap, vmin=vmin, vmax=vmax, origin=origin
                 )
                 # Note: imshow origin parameter handles orientation, so no need to invert
 
