@@ -206,6 +206,8 @@ tramp
 *.sqlite
 *.db
 *.sql
+*.xml
+*.ovr
 
 # Allow specific example and config files
 !examples/data/*
