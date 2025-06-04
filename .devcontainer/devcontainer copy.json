@@ -1,6 +1,13 @@
 {
-  "name": "dss-pollution-dev",
-  "image": "dss-pollution-extraction:latest",
+  "name": "Python 3 + uv (custom Dockerfile)",
+  "build": {
+    "dockerfile": "../docker/Dockerfile",
+    "context": "..",
+    "args": {
+      "BUILDKIT_INLINE_CACHE": "1"
+    },
+    "cacheFrom": "dss-pollution-extraction:latest"
+  },
   "features": {
     "ghcr.io/devcontainers-extra/features/ruff:1": {}
   },
