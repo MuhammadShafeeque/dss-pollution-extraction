@@ -90,7 +90,11 @@ except KeyError as e:
 # --- Data Export: Export the time-averaged map to GeoTIFF (in-memory example, not saved) ---
 exporter = DataExporter(dataset, var_name)
 # NOTE: Commenting out the actual export to avoid dask computation hanging on large datasets
-# exporter.to_geotiff("Z:/monthly_mean_pm25.tif", time_index=slice(None), aggregation_method="mean")
+exporter.to_geotiff(
+    "/workspaces/dss-pollution-extraction/monthly_mean_pm25.tif",
+    time_index=slice(None),
+    aggregation_method="mean",
+)
 print(
     "\n[DataExporter] Example: exporter.to_geotiff() can export data (commented out to avoid dask computation hang)."
 )

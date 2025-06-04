@@ -12,7 +12,7 @@ import pandas as pd
 import rasterio
 import xarray as xr
 from rasterio.crs import CRS
-from rasterio.transform import from_bounds
+from rasterio.transform import Affine
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +41,34 @@ class AggregationMethod(str, Enum):
 class SpatialData(Protocol):
     """Protocol for spatial data types."""
 
-    def to_crs(self, crs: Any) -> "SpatialData": ...
-    def to_file(self, filename: str, driver: str = "GeoJSON") -> None: ...
+    def to_crs(self, crs: Any) -> "SpatialData":
+        """Reproject spatial data to the specified CRS.
+
+        Parameters
+        ----------
+        crs : Any
+            Target coordinate reference system.
+
+        Returns
+        -------
+        SpatialData
+            Reprojected spatial data.
+
+        """
+        ...
+
+    def to_file(self, filename: str, driver: str = "GeoJSON") -> None:
+        """Export spatial data to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the output file.
+        driver : str, optional
+            File format driver, by default "GeoJSON".
+
+        """
+        ...
 
 
 def ensure_path(path: str | Path) -> Path:
@@ -82,14 +108,9 @@ def create_transform(x_coords: np.ndarray, y_coords: np.ndarray) -> tuple:
     """Calculate transform for GeoTIFF."""
     x_res = x_coords[1] - x_coords[0]
     y_res = y_coords[1] - y_coords[0]
-    return from_bounds(
-        x_coords[0] - x_res / 2,
-        y_coords[0] - y_res / 2,
-        x_coords[-1] + x_res / 2,
-        y_coords[-1] + y_res / 2,
-        len(x_coords),
-        len(y_coords),
-    )
+    return Affine.translation(
+        x_coords[0] - x_res / 2, y_coords[0] - y_res / 2
+    ) * Affine.scale(x_res, y_res)
 
 
 def select_time_data(
@@ -126,6 +147,7 @@ class DataExporter:
             The pollution dataset
         pollution_variable : str
             Name of the pollution variable to export
+
         """
         self.dataset = dataset
         self.pollution_variable = pollution_variable
@@ -149,6 +171,7 @@ class DataExporter:
             Spatial subset bounds
         compression : dict, optional
             Compression parameters for NetCDF
+
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,10 +215,11 @@ class DataExporter:
         aggregation_method : str, optional
             Method to aggregate data over time dimension
 
-        Returns:
+        Returns
         -------
         xr.DataArray
             Subset and potentially aggregated data
+
         """
         if isinstance(time_index, slice):
             data = data.sel(time=time_index)
@@ -228,30 +252,28 @@ class DataExporter:
         y_coords : np.ndarray
             Y coordinates
 
-        Returns:
+        Returns
         -------
         tuple
             Transform matrix for GeoTIFF
+
         """
         x_res = x_coords[1] - x_coords[0]
         y_res = y_coords[1] - y_coords[0]
 
-        return from_bounds(
+        return Affine.translation(
             x_coords[0] - x_res / 2,
             y_coords[0] - y_res / 2,
-            x_coords[-1] + x_res / 2,
-            y_coords[-1] + y_res / 2,
-            len(x_coords),
-            len(y_coords),
-        )
+        ) * Affine.scale(x_res, y_res)
 
     def _get_crs(self) -> CRS:
         """Get CRS from dataset or return default.
 
-        Returns:
+        Returns
         -------
         CRS
             Coordinate reference system
+
         """
         if "crs" in self.dataset:
             crs_wkt = self.dataset.crs.attrs.get("crs_wkt", "")
@@ -290,6 +312,7 @@ class DataExporter:
             Compression method
         dtype : str
             Data type for the output
+
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -308,10 +331,6 @@ class DataExporter:
 
         # Handle NaN values
         data_array = np.where(np.isnan(data_array), nodata_value, data_array)
-
-        # Flip y-axis if needed (rasterio expects top-left origin)
-        if y_coords[0] < y_coords[-1]:
-            data_array = np.flipud(data_array)
 
         # Convert data type
         data_array = data_array.astype(dtype)
@@ -383,6 +402,7 @@ class DataExporter:
             Time format string
         spatial_aggregation : str, optional
             Spatial aggregation method ('mean', 'max', 'min', 'sum')
+
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -427,24 +447,7 @@ class DataExporter:
         formats: list[str] | None = None,
         base_filename: str = "extracted_points",
     ) -> dict[str, Path]:
-        """Export extracted point data to multiple formats.
-
-        Parameters
-        ----------
-        extracted_data : xr.Dataset
-            Extracted point data
-        output_dir : str or Path
-            Output directory
-        formats : list of str
-            List of output formats ('csv', 'geojson', 'shapefile')
-        base_filename : str
-            Base filename for outputs
-
-        Returns:
-        -------
-        dict
-            Dictionary mapping format names to output file paths
-        """
+        """Export extracted point data to multiple formats."""
         if formats is None:
             formats = ["csv", "geojson"]
         output_dir = Path(output_dir)
@@ -455,87 +458,25 @@ class DataExporter:
         # Convert to DataFrame
         df = extracted_data.to_dataframe().reset_index()
 
-        # Get coordinate information if available
-        x_coords = []
-        y_coords = []
-
-        for idx in df["location_id"].unique():
-            location_data = df[df["location_id"] == idx]
-            # Try to extract coordinates from metadata
-            x_coord = location_data.get("location_x", None)
-            y_coord = location_data.get("location_y", None)
-
-            if x_coord is None or y_coord is None:
-                # If coordinates not in metadata, use first available x,y values
-                if "x" in location_data.columns and "y" in location_data.columns:
-                    x_coord = location_data["x"].iloc[0]
-                    y_coord = location_data["y"].iloc[0]
-
-            x_coords.append(x_coord)
-            y_coords.append(y_coord)
-
-        # Create summary DataFrame
-        summary_df = (
-            df.groupby("location_id")
-            .agg({self.pollution_variable: ["mean", "min", "max", "std", "count"]})
-            .round(4)
-        )
-
-        # Flatten column names
-        summary_df.columns = [
-            "_".join(col).strip() for col in summary_df.columns.values
-        ]
-        summary_df = summary_df.reset_index()
-
-        # Add coordinates
-        if len(x_coords) == len(summary_df):
-            summary_df["x"] = x_coords
-            summary_df["y"] = y_coords
-
-        # Export to different formats
+        # Export to CSV
         if "csv" in formats:
             csv_path = output_dir / f"{base_filename}.csv"
             df.to_csv(csv_path, index=False)
             output_paths["csv"] = csv_path
 
-            # Also export summary
-            summary_csv_path = output_dir / f"{base_filename}_summary.csv"
-            summary_df.to_csv(summary_csv_path, index=False)
-            output_paths["csv_summary"] = summary_csv_path
-
-        if "geojson" in formats and len(x_coords) == len(summary_df):
-            # Create GeoDataFrame for point locations
+        # Export to GeoJSON
+        if "geojson" in formats:
             from shapely.geometry import Point
 
             geometry = [
-                Point(x, y)
-                for x, y in zip(x_coords, y_coords, strict=False)
-                if x is not None and y is not None
+                Point(row.x, row.y)
+                for _, row in df.iterrows()
+                if "x" in row and "y" in row
             ]
-
-            if geometry:
-                gdf = gpd.GeoDataFrame(summary_df, geometry=geometry, crs="EPSG:3035")
-
-                geojson_path = output_dir / f"{base_filename}.geojson"
-                gdf.to_file(geojson_path, driver="GeoJSON")
-                output_paths["geojson"] = geojson_path
-
-        if "shapefile" in formats and len(x_coords) == len(summary_df):
-            # Create GeoDataFrame for point locations
-            from shapely.geometry import Point
-
-            geometry = [
-                Point(x, y)
-                for x, y in zip(x_coords, y_coords, strict=False)
-                if x is not None and y is not None
-            ]
-
-            if geometry:
-                gdf = gpd.GeoDataFrame(summary_df, geometry=geometry, crs="EPSG:3035")
-
-                shapefile_path = output_dir / f"{base_filename}.shp"
-                gdf.to_file(shapefile_path, driver="ESRI Shapefile")
-                output_paths["shapefile"] = shapefile_path
+            gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:3035")
+            geojson_path = output_dir / f"{base_filename}.geojson"
+            gdf.to_file(geojson_path, driver="GeoJSON")
+            output_paths["geojson"] = geojson_path
 
         logger.info(f"Extracted point data exported to: {list(output_paths.values())}")
         return output_paths
@@ -563,10 +504,11 @@ class DataExporter:
         base_filename : str
             Base filename for outputs
 
-        Returns:
+        Returns
         -------
         dict
             Dictionary mapping format names to output file paths
+
         """
         if formats is None:
             formats = ["csv", "geojson"]
@@ -661,10 +603,11 @@ class DataExporter:
         base_filename : str
             Base filename for outputs
 
-        Returns:
+        Returns
         -------
         dict
             Dictionary mapping format names to output file paths
+
         """
         if formats is None:
             formats = ["csv"]
@@ -701,6 +644,7 @@ class DataExporter:
             Output path for metadata file
         processing_info : dict, optional
             Additional processing information
+
         """
         output_path = Path(output_path)
 
