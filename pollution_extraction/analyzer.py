@@ -8,7 +8,7 @@ import geopandas as gpd
 import xarray as xr
 from matplotlib.figure import Figure
 
-from .core.data_exporter import DataExporter
+from .core import DataExporter
 from .core.data_reader import PollutionDataReader
 from .core.data_visualizer import DataVisualizer
 from .core.spatial_extractor import SpatialExtractor

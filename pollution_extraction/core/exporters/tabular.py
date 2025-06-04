@@ -1,14 +1,17 @@
 """Tabular data export functionality."""
 
 from pathlib import Path
-from typing import Literal
 
 import pandas as pd
 import xarray as xr
 
-from . import BaseExporter, ExportFormat, ensure_path, logger
-
-FormatList = list[Literal["csv", "json"]]
+from ..logging_utils import logger
+from .base import (
+    BaseExporter,
+    ExportFormat,
+    TabularFormatList as FormatList,
+    ensure_path,
+)
 
 
 class TabularExporter(BaseExporter):
@@ -33,6 +36,7 @@ class TabularExporter(BaseExporter):
             Time format string
         spatial_aggregation : str, optional
             Spatial aggregation method ('mean', 'max', 'min', 'sum')
+
         """
         output_path = ensure_path(output_path)
         data = self._get_data()
@@ -75,10 +79,11 @@ class TabularExporter(BaseExporter):
         base_filename : str
             Base filename for outputs
 
-        Returns:
+        Returns
         -------
         dict
             Dictionary mapping format names to output file paths
+
         """
         if formats is None:
             formats = ["csv"]

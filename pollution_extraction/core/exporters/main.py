@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from .base import logger
+from ..logging_utils import logger
 from .raster import RasterExporter
 from .spatial import SpatialExporter
 from .tabular import TabularExporter
@@ -28,6 +28,7 @@ class DataExporter(RasterExporter, SpatialExporter, TabularExporter):
             Output path for metadata file
         processing_info : dict, optional
             Additional processing information
+
         """
         output_path = Path(output_path)
 

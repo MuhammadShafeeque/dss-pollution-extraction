@@ -7,9 +7,13 @@ import pandas as pd
 import xarray as xr
 from shapely.geometry import Point
 
-"""Module for spatial data export functionality."""
-
-from . import BaseExporter, ExportFormat, ensure_path, logger
+from ..logging_utils import logger
+from .base import (
+    BaseExporter,
+    ExportFormat,
+    SpatialFormatList as FormatList,
+    ensure_path,
+)
 
 
 class SpatialExporter(BaseExporter):
@@ -45,10 +49,11 @@ class SpatialExporter(BaseExporter):
         df : pd.DataFrame
             DataFrame with point location data
 
-        Returns:
+        Returns
         -------
         tuple[list[float], list[float]]
             Lists of x and y coordinates
+
         """
         x_coords: list[float] = []
         y_coords: list[float] = []
@@ -78,10 +83,11 @@ class SpatialExporter(BaseExporter):
         location_data : pd.DataFrame
             DataFrame containing location data
 
-        Returns:
+        Returns
         -------
         tuple[float, float]
             x and y coordinates
+
         """
         x_coord = location_data.get("location_x", None)
         y_coord = location_data.get("location_y", None)
@@ -107,10 +113,11 @@ class SpatialExporter(BaseExporter):
         df : pd.DataFrame
             DataFrame with location data
 
-        Returns:
+        Returns
         -------
         tuple[list[float], list[float]]
             Lists of x and y coordinates
+
         """
         coords: list[tuple[float, float]] = [
             self._extract_coordinates_from_location(df[df["location_id"] == idx])
@@ -126,10 +133,11 @@ class SpatialExporter(BaseExporter):
         df : pd.DataFrame
             Input DataFrame with values
 
-        Returns:
+        Returns
         -------
         pd.DataFrame
             Summary statistics
+
         """
         stats = ["mean", "min", "max", "std", "count"]
         summary = (
@@ -154,10 +162,11 @@ class SpatialExporter(BaseExporter):
         name : str
             Base name for files
 
-        Returns:
+        Returns
         -------
         dict[str, Path]
             Mapping of output types to file paths
+
         """
         paths: dict[str, Path] = {}
 

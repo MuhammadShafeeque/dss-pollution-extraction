@@ -9,7 +9,8 @@ import xarray as xr
 from rasterio.crs import CRS
 from rasterio.transform import from_bounds
 
-from . import BaseExporter, ensure_path, logger
+from ..logging_utils import logger
+from .base import BaseExporter, ensure_path
 
 
 class RasterExporter(BaseExporter):
@@ -109,6 +110,7 @@ class RasterExporter(BaseExporter):
             Compression method
         dtype : str
             Data type for the output
+
         """
         output_path = ensure_path(output_path)
 

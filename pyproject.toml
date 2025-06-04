@@ -40,7 +40,7 @@ dependencies = [
   "dask>=2022.1.0",
   "netcdf4>=1.5.0",
   "pyproj>=3.3.0",
-  "h5netcdf>=1.6.1"
+  "h5netcdf>=1.6.1",
 ]
 
 [project.optional-dependencies]
@@ -71,10 +71,12 @@ performance = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
-Repository = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
-Documentation = "https://dss-pollution-extraction.readthedocs.io/"
-Bug Tracker = "https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues"
+homepage = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
+documentation = "https://dss-pollution-extraction.readthedocs.io/"
+repository = "https://github.com/MuhammadShafeeque/dss-pollution-extraction"
+bug-tracker = "https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues"
+download = "https://pypi.org/project/dss-pollution-extraction/"
+
 
 [project.scripts]
 dss-pollution-analyze = "pollution_extraction.cli:main"

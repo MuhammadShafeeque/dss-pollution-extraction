@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -22,15 +23,16 @@ def validate_date_range(
     end_date : str
         End date string
 
-    Returns:
+    Returns
     -------
     tuple
         Tuple of parsed start and end dates
 
-    Raises:
+    Raises
     ------
     ValueError
         If dates are invalid or start_date > end_date
+
     """
     try:
         start = pd.to_datetime(start_date)
@@ -61,10 +63,11 @@ def validate_coordinates(
     x_bounds, y_bounds : tuple, optional
         Valid coordinate bounds
 
-    Returns:
+    Returns
     -------
     bool
         True if coordinates are valid
+
     """
     if not (np.isfinite(x) and np.isfinite(y)):
         return False
@@ -86,10 +89,11 @@ def get_season_from_month(month: int) -> str:
     month : int
         Month number (1-12)
 
-    Returns:
+    Returns
     -------
     str
         Season name
+
     """
     season_map = {
         12: "winter",
@@ -120,10 +124,11 @@ def calculate_statistics(
     percentiles : list of float
         Percentiles to calculate
 
-    Returns:
+    Returns
     -------
     dict
         Dictionary of statistics
+
     """
     # Remove NaN values
     if percentiles is None:
@@ -168,10 +173,11 @@ def detect_outliers(
     threshold : float
         Threshold for outlier detection
 
-    Returns:
+    Returns
     -------
     np.ndarray
         Boolean array indicating outliers
+
     """
     clean_data = data[~np.isnan(data)]
 
@@ -216,10 +222,11 @@ def resample_data(
     method : str
         Interpolation method
 
-    Returns:
+    Returns
     -------
     xr.Dataset
         Resampled dataset
+
     """
     # Calculate new coordinate arrays
     x_min, x_max = float(data.x.min()), float(data.x.max())
@@ -256,10 +263,11 @@ def create_time_mask(
     exclude_weekends : bool
         Whether to exclude weekends
 
-    Returns:
+    Returns
     -------
     xr.DataArray
         Boolean mask array
+
     """
     mask = xr.ones_like(time_coord, dtype=bool)
 
@@ -308,10 +316,11 @@ def align_datasets(
     method : str
         Alignment method ('inner', 'outer', 'left', 'right')
 
-    Returns:
+    Returns
     -------
     list of xr.Dataset
         Aligned datasets
+
     """
     if len(datasets) < 2:
         return datasets
@@ -342,10 +351,11 @@ def calculate_trends(
     method : str
         Trend calculation method ('linear', 'theil_sen')
 
-    Returns:
+    Returns
     -------
     xr.Dataset
         Dataset with trend statistics (slope, intercept, r_value, p_value)
+
     """
     from scipy import stats
 
@@ -413,10 +423,11 @@ def convert_units(data: xr.DataArray, from_unit: str, to_unit: str) -> xr.DataAr
     to_unit : str
         Target unit
 
-    Returns:
+    Returns
     -------
     xr.DataArray
         Data with converted units
+
     """
     # Unit conversion factors (basic implementation)
     conversion_factors = {
@@ -456,10 +467,11 @@ def memory_usage_check(
     memory_limit_gb : float
         Memory limit in GB
 
-    Returns:
+    Returns
     -------
     bool
         True if operation is safe
+
     """
     # Estimate memory usage
     total_size = 0
@@ -494,10 +506,11 @@ def optimize_chunks(
     target_chunk_size_mb : float
         Target chunk size in MB
 
-    Returns:
+    Returns
     -------
     xr.Dataset
         Dataset with optimized chunks
+
     """
     # Calculate optimal chunk sizes
     target_size_bytes = target_chunk_size_mb * 1e6
@@ -527,10 +540,11 @@ def validate_crs(dataset: xr.Dataset) -> bool:
     dataset : xr.Dataset
         Dataset to validate
 
-    Returns:
+    Returns
     -------
     bool
         True if CRS is valid
+
     """
     if "crs" not in dataset:
         logger.warning("No CRS information found in dataset")
@@ -559,10 +573,11 @@ def create_directory_structure(
     analysis_type : str
         Type of analysis ('temporal', 'spatial', 'comprehensive')
 
-    Returns:
+    Returns
     -------
     dict
         Dictionary of created directories
+
     """
     base_dir = Path(base_dir)
 
@@ -605,10 +620,11 @@ def format_file_size(size_bytes: int) -> str:
     size_bytes : int
         Size in bytes
 
-    Returns:
+    Returns
     -------
     str
         Formatted size string
+
     """
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size_bytes < 1024.0:
@@ -627,10 +643,11 @@ def estimate_processing_time(dataset_size_gb: float, operation: str = "load") ->
     operation : str
         Type of operation ('load', 'aggregate', 'extract', 'export')
 
-    Returns:
+    Returns
     -------
     str
         Estimated time string
+
     """
     # Rough estimates based on typical hardware
     time_factors = {
@@ -664,10 +681,11 @@ def check_data_completeness(
     min_coverage : float
         Minimum data coverage threshold (0-1)
 
-    Returns:
+    Returns
     -------
     dict
         Completeness report
+
     """
     total_points = data.size
     valid_points = (~data.isnull()).sum().item()

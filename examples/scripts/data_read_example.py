@@ -5,13 +5,13 @@ Shows how to read NetCDF files and perform initial data manipulations.
 
 import matplotlib.pyplot as plt
 
-from pollution_extraction.core.data_exporter import DataExporter
+from pollution_extraction.core import DataExporter
 from pollution_extraction.core.data_reader import PollutionDataReader
 from pollution_extraction.core.data_visualizer import DataVisualizer
 from pollution_extraction.core.spatial_extractor import SpatialExtractor
 
 # Path to your NetCDF file
-file_path = "Z:/PM2p5_daily_1km_EU/PM2p5_downscaled_daily_lr_2006_01.nc"
+file_path = "/workspaces/dss-pollution-extraction/PM2p5_downscaled_daily_lr_2006_01.nc"
 
 # Initialize the reader (auto-detects pollution type if not specified)
 reader = PollutionDataReader(file_path, pollution_type="pm25")

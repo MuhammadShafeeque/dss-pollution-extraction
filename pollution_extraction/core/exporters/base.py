@@ -3,10 +3,17 @@
 import logging
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 import xarray as xr
 
 logger = logging.getLogger(__name__)
+
+
+# Format list type definitions
+TabularFormatList = list[Literal["csv", "json"]]
+SpatialFormatList = list[Literal["geojson", "shapefile", "csv"]]
+RasterFormatList = list[Literal["geotiff", "netcdf"]]
 
 
 class ExportFormat(str, Enum):

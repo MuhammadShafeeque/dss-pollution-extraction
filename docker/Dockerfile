@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 
 # Add non-root user
-RUN groupadd -g 1000 developer && useradd -u 1000 -g developer -m -s /bin/bash developer
+RUN groupadd -g 1000 developer && \
+    useradd -u 1000 -g developer -m -s /bin/bash developer
 
 # Install system dependencies
 RUN apt-get update && \
@@ -14,21 +15,16 @@ RUN apt-get update && \
     libgeos-dev \
     git \
     build-essential \
-    libgdal-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libgdal-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install uv
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && ln -s /root/.cargo/bin/uv /usr/local/bin/uv
+# Install uv and move it to a global location
+# Install uv and move it to a global location
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    install -Dm755 /root/.local/bin/uv /usr/local/bin/uv
 
+# Set working directory
+WORKDIR /workspace/dss-pollution-extraction
 
-# Setup work directory
-WORKDIR /workspaces/dss-pollution-extraction
-COPY . .
-
-# Set permissions
-RUN chown -R developer:developer /workspaces
-
-# Switch to non-root user
+# Switch to developer user
 USER developer
