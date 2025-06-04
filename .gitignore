@@ -238,6 +238,7 @@ tramp
 *.gdb/
 
 # Image files
+!log.png
 *.png
 *.jpg
 *.jpeg
