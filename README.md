@@ -1,39 +1,39 @@
 # DSS Pollution Extraction
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/Development%20Status-Beta-orange.svg)](https://pypi.org/project/dss-pollution-extraction/)
 
 A comprehensive Python package for analyzing pollution data from NetCDF files, developed at the Alfred Wegener Institute (AWI). This package provides tools for temporal aggregations, spatial extractions, visualizations, and health threshold analysis of atmospheric pollution data.
 
-## 🌟 Features
+## Features
 
-### 📊 **Data Analysis**
+### Data Analysis
 - **Multi-pollutant support**: Black Carbon (BC), NO₂, PM₂.₅, PM₁₀
 - **Temporal aggregations**: Monthly, seasonal, annual, and custom period averages
 - **Spatial extractions**: Point-based, polygon-based, and NUTS3 region analysis
 - **Statistical analysis**: Comprehensive data statistics and quality control
 
-### 🗺️ **Visualization**
+### Visualization
 - **Spatial maps**: Interactive and publication-ready maps with Cartopy support
 - **Time series plots**: Domain averages and location-specific trends
 - **Seasonal cycles**: Annual pattern analysis and visualization
 - **Distribution analysis**: Histograms and box plots for data exploration
 - **Spatial statistics**: Mean, maximum, minimum, and standard deviation maps
 
-### 📤 **Data Export**
+### Data Export
 - **Multiple formats**: NetCDF, GeoTIFF, CSV, GeoJSON, Shapefile
 - **Flexible subsetting**: Temporal and spatial data subsetting
 - **Batch processing**: Multi-file analysis workflows
 - **Compression support**: Optimized file sizes for large datasets
 
-### 🏥 **Health Analysis**
+### Health Analysis
 - **WHO guidelines**: Air quality threshold analysis
 - **EU standards**: Compliance checking with European regulations
 - **Exceedance mapping**: Spatial distribution of threshold violations
 - **Health impact assessment**: Tools for public health research
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -76,43 +76,123 @@ analyzer.export_to_geotiff("pm25_annual.tif", aggregation_method="mean")
 analyzer.export_to_csv("pm25_data.csv")
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 dss-pollution-extraction/
-├── pollution_extraction/           # Main package
-│   ├── core/                      # Core functionality
-│   │   ├── data_reader.py         # NetCDF data reading
-│   │   ├── temporal_aggregator.py # Time-based analysis
-│   │   ├── spatial_extractor.py   # Spatial data extraction
-│   │   ├── data_visualizer.py     # Plotting and visualization
-│   │   └── data_exporter.py       # Multi-format data export
-│   ├── analyzer.py                # Main analysis interface
-│   ├── cli.py                     # Command-line interface
-│   ├── config.py                  # Configuration management
-│   ├── utils.py                   # Utility functions
-│   └── examples.py                # Usage examples
-├── examples/                      # Example data and scripts
-│   ├── notebooks/                 # Jupyter notebooks
-│   ├── scripts/                   # Example Python scripts
-│   └── data/                      # Sample datasets
-├── tests/                         # Unit tests
-├── docs/                          # Documentation
-└── config/                        # Configuration files
+├── pollution_extraction/                  # Main package
+│   ├── __init__.py                       # Package initialization
+│   ├── analyzer.py                       # Main analysis interface
+│   ├── cli.py                           # Command-line interface
+│   ├── config.py                        # Configuration management
+│   ├── utils.py                         # Utility functions
+│   ├── examples.py                      # Usage examples
+│   └── core/                            # Core functionality modules
+│       ├── __init__.py                  # Core package initialization
+│       ├── data_reader.py               # NetCDF data reading
+│       ├── temporal_aggregator.py       # Time-based analysis
+│       ├── spatial_extractor.py         # Spatial data extraction
+│       ├── data_visualizer.py           # Plotting and visualization
+│       ├── data_exporter.py             # Multi-format data export
+│       ├── logging_utils.py             # Logging configuration
+│       └── exporters/                   # Export format handlers
+│           ├── __init__.py              # Exporters package init
+│           ├── _base.py                 # Base exporter (private)
+│           ├── _main.py                 # Main export coordinator (private)
+│           ├── _raster.py               # Raster format exports (private)
+│           ├── _spatial.py              # Vector format exports (private)
+│           ├── _tabular.py              # Tabular format exports (private)
+│           ├── base.py                  # Base exporter class (public)
+│           ├── main.py                  # Main export coordinator (public)
+│           ├── raster.py                # Raster format exports (public)
+│           ├── spatial.py               # Vector format exports (public)
+│           ├── tabular.py               # Tabular format exports (public)
+│           └── types.py                 # Export type definitions
+├── examples/                            # Example data and scripts
+│   ├── data/                            # Sample datasets
+│   │   ├── sample_pm25.nc               # Sample PM2.5 data
+│   │   ├── sample_points.csv            # Sample monitoring points
+│   │   └── sample_regions.geojson       # Sample regions
+│   ├── notebooks/                       # Jupyter notebooks
+│   │   ├── advanced_spatial_analysis.ipynb
+│   │   ├── data_extraction_analysis.ipynb
+│   │   ├── temporal_pattern_analysis.ipynb
+│   │   └── test_data_read_example.ipynb
+│   └── scripts/                         # Example Python scripts
+│       ├── basic_workflow.py            # Basic usage examples
+│       ├── batch_processing.py          # Batch processing example
+│       ├── data_read_example.py         # Data reading example
+│       ├── nuts3_analysis.py            # NUTS3 region analysis
+│       └── test_spatial_fix.py          # Spatial processing test
+├── tests/                               # Unit tests
+│   ├── __init__.py                      # Test package init
+│   ├── conftest.py                      # Test configuration
+│   ├── temp_test.py                     # Temporary test file
+│   ├── test_analyzer.py                 # Analyzer tests
+│   ├── test_cli.py                      # CLI tests
+│   ├── test_exporter.py                 # Export functionality tests
+│   ├── test_integration.py              # Integration tests
+│   ├── test_reader.py                   # Data reader tests
+│   ├── test_spatial_extractor.py        # Spatial extraction tests
+│   ├── test_temporal_aggregator.py      # Temporal aggregation tests
+│   ├── test_visualizer.py               # Visualization tests
+│   └── fixtures/                        # Test data fixtures
+│       └── sample_data.nc               # Sample test data
+├── docs/                                # Documentation
+│   ├── source/                          # Sphinx documentation source
+│   │   ├── api.rst                      # API reference
+│   │   ├── conf.py                      # Sphinx configuration
+│   │   ├── examples.rst                 # Examples documentation
+│   │   ├── index.rst                    # Main documentation index
+│   │   ├── installation.rst             # Installation guide
+│   │   └── tutorial.rst                 # Tutorial documentation
+│   ├── requirements.txt                 # Documentation dependencies
+│   └── Makefile                         # Documentation build
+├── config/                              # Configuration files
+│   ├── default_config.json              # Default configuration
+│   ├── sample_config.yaml               # Sample configuration
+│   └── user_config_template.yaml        # User configuration template
+├── scripts/                             # Build and deployment scripts
+│   ├── build.sh                         # Build script
+│   ├── deploy.sh                        # Deployment script
+│   ├── setup_dev.sh                     # Development setup
+│   └── test.sh                          # Test runner script
+├── docker/                              # Docker configuration
+│   ├── Dockerfile                       # Docker image definition
+│   ├── docker-compose.yml               # Docker compose configuration
+│   └── requirements-docker.txt          # Docker-specific requirements
+├── data/                                # Additional data files
+├── output/                              # Output directory for exports
+├── pyproject.toml                       # Modern Python project configuration
+├── setup.py                            # Legacy setup script
+├── requirements.txt                     # Production dependencies
+├── requirements-dev.txt                 # Development dependencies
+├── requirements-docs.txt                # Documentation dependencies
+├── requirements-test.txt                # Testing dependencies
+├── MANIFEST.in                          # Package manifest
+├── tox.ini                             # Tox configuration for testing
+├── uv.lock                             # UV package manager lock file
+├── Makefile                            # Build automation
+├── README.md                           # Project documentation
+├── LICENSE                             # MIT License file
+├── CHANGELOG.md                        # Change log
+├── CITATION.cff                        # Citation information
+├── CODE_OF_CONDUCT.md                  # Code of conduct
+└── CONTRIBUTING.md                     # Contributing guidelines
 ```
 
-## 🛠️ Requirements
+## Requirements
 
 ### Core Dependencies
-- **Python**: ≥3.8
-- **xarray**: ≥2022.3.0 (NetCDF data handling)
-- **pandas**: ≥1.4.0 (Data manipulation)
-- **numpy**: ≥1.21.0 (Numerical operations)
-- **geopandas**: ≥0.10.0 (Spatial data)
-- **rioxarray**: ≥0.11.0 (Raster I/O)
-- **matplotlib**: ≥3.5.0 (Plotting)
-- **seaborn**: ≥0.11.0 (Statistical visualization)
-- **cartopy**: ≥0.20.0 (Geographic projections)
+- **Python**: >= 3.11
+- **xarray**: >= 2022.3.0 (NetCDF data handling)
+- **pandas**: >= 1.4.0 (Data manipulation)
+- **numpy**: >= 1.21.0 (Numerical operations)
+- **geopandas**: >= 0.10.0 (Spatial data)
+- **rioxarray**: >= 0.11.0 (Raster I/O)
+- **matplotlib**: >= 3.5.0 (Plotting)
+- **seaborn**: >= 0.11.0 (Statistical visualization)
+- **cartopy**: >= 0.20.0 (Geographic projections)
 
 ### Optional Dependencies
 - **Jupyter**: Interactive notebooks
@@ -120,7 +200,7 @@ dss-pollution-extraction/
 - **Folium**: Web-based mapping
 - **Numba**: Performance optimization
 
-## 📋 Supported Data Formats
+## Supported Data Formats
 
 ### Input Formats
 - **NetCDF4** (.nc): Primary format for atmospheric data
@@ -135,7 +215,7 @@ dss-pollution-extraction/
 - **GeoJSON**: Vector format for web applications
 - **Shapefile**: Standard GIS vector format
 
-## 🌍 Supported Pollutants
+## Supported Pollutants
 
 | Pollutant | Variable Name | Units | Description |
 |-----------|---------------|-------|-------------|
@@ -144,7 +224,7 @@ dss-pollution-extraction/
 | **PM₂.₅** | `PM2p5_downscaled` | μg/m³ | Fine particulate matter |
 | **PM₁₀** | `PM10_downscaled` | μg/m³ | Coarse particulate matter |
 
-## 📚 Examples
+## Examples
 
 ### Temporal Analysis
 ```python
@@ -198,7 +278,7 @@ for file_path in file_patterns:
         analyzer.export_to_geotiff(f"no2_annual_{year}.tif")
 ```
 
-## 🖥️ Command Line Interface
+## Command Line Interface
 
 The package includes a comprehensive CLI for common operations:
 
@@ -219,7 +299,7 @@ pollution-cli health-analysis pollution_data.nc --type pm25 --who-guidelines
 pollution-cli batch-process data/*.nc --type bc --monthly --annual
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Default Configuration
 The package uses sensible defaults but can be customized via configuration files:
@@ -247,7 +327,7 @@ export POLLUTION_CONFIG_PATH="/path/to/your/config.yaml"
 export POLLUTION_OUTPUT_DIR="/path/to/output"
 ```
 
-## 🧪 Testing
+## Testing
 
 Run the test suite:
 
@@ -262,7 +342,7 @@ pytest --cov=pollution_extraction
 pytest tests/test_spatial_extractor.py
 ```
 
-## 📖 Documentation
+## Documentation
 
 Comprehensive documentation is available:
 
@@ -277,7 +357,7 @@ cd docs/
 make html
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
 
@@ -302,7 +382,7 @@ pip install -e ".[dev,docs,jupyter]"
 pre-commit install
 ```
 
-## 📊 Performance
+## Performance
 
 The package is optimized for large datasets:
 
@@ -316,7 +396,7 @@ The package is optimized for large datasets:
 - **50 monitoring stations**: <30 seconds for time series extraction
 - **NUTS3 regions (1,000+ polygons)**: ~2 minutes for spatial aggregation
 
-## 🐛 Known Issues & Limitations
+## Known Issues and Limitations
 
 - **Coordinate Systems**: Currently optimized for LAEA Europe projection
 - **Memory Usage**: Very large files (>20GB) may require chunking configuration
@@ -324,11 +404,11 @@ The package is optimized for large datasets:
 
 See our [Issues](https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues) page for current bugs and feature requests.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
-## 👥 Authors & Acknowledgments
+## Authors and Acknowledgments
 
 **Main Developer:**
 - **Muhammad Shafeeque** - *Lead Developer* - [Alfred Wegener Institute (AWI)](https://www.awi.de/)
@@ -344,14 +424,14 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 - The xarray and pandas development communities
 - Contributors to the atmospheric science Python ecosystem
 
-## 📞 Support & Contact
+## Support and Contact
 
 - **Documentation**: [https://dss-pollution-extraction.readthedocs.io/](https://dss-pollution-extraction.readthedocs.io/)
 - **Issues**: [GitHub Issues](https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/MuhammadShafeeque/dss-pollution-extraction/discussions)
 - **Email**: muhammad.shafeeque@awi.de
 
-## 📈 Roadmap
+## Roadmap
 
 ### Version 1.1 (Planned)
 - [ ] Additional coordinate system support
@@ -365,7 +445,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 - [ ] Web-based dashboard
 - [ ] API service
 
-## 🏷️ Citation
+## Citation
 
 If you use this package in your research, please cite:
 
