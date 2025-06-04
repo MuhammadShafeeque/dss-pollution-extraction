@@ -3,16 +3,14 @@
 import logging
 import warnings
 from pathlib import Path
-from typing import Any
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import xarray as xr
+from matplotlib.figure import Figure
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,7 @@ class DataVisualizer:
         sns.set_palette("husl")
 
     def _maybe_invert_yaxis(self, ax, data):
-        """Invert y-axis if y-coordinates are descending (to match imshow origin='upper')."""
+        """Invert y-axis if y-coordinates are descending."""
         y = data.y.values if hasattr(data, "y") else None
         if y is not None and len(y) > 1 and y[0] > y[-1]:
             ax.invert_yaxis()
@@ -78,8 +76,7 @@ class DataVisualizer:
         show_colorbar: bool = True,
         vmin: float | None = None,
         vmax: float | None = None,
-        projection: Any | None = None,
-    ):
+    ) -> Figure | None:
         """Create a spatial map of pollution data.
 
         Parameters
@@ -96,13 +93,11 @@ class DataVisualizer:
             Whether to show colorbar
         vmin, vmax : float, optional
             Color scale limits
-        projection : cartopy projection, optional
-            Map projection
 
         Returns
         -------
-        plt.Figure
-            The created figure
+        Optional[Figure]
+            The created figure or None if failed
 
         """
         # Select data for the specified time
@@ -113,40 +108,67 @@ class DataVisualizer:
         else:
             data = self.dataset[self.pollution_variable].isel(time=time_index)
 
-        # Create figure
-        if projection:
-            fig = plt.figure(figsize=figsize)
-            ax = plt.axes(projection=projection)
-            ax.add_feature(cfeature.COASTLINE)
-            ax.add_feature(cfeature.BORDERS)
-            ax.add_feature(cfeature.LAND, alpha=0.3)
-            ax.add_feature(cfeature.OCEAN, alpha=0.3)
-        else:
-            fig, ax = plt.subplots(figsize=figsize)
+        # Check if data is valid and add debug information
+        if data.isnull().all():
+            logger.warning("All data values are NaN for the selected time index")
+            return None
 
-        # Plot data
-        data.plot(
-            ax=ax,
-            cmap=self.cmap,
-            add_colorbar=show_colorbar,
-            vmin=vmin,
-            vmax=vmax,
-            transform=ccrs.PlateCarree() if projection else None,
-        )
-        # Invert y-axis if needed for correct orientation
-        if not projection:
+        # Print debug information
+        print(f"Data shape: {data.shape}")
+        print(f"Data range: {data.min().values} to {data.max().values}")
+        print("Data coordinates:")
+        if hasattr(data, "x"):
+            x_vals = data.x.values
+            print(f"  x: {x_vals[:5]}...{x_vals[-5:]} (first/last 5)")
+        if hasattr(data, "y"):
+            y_vals = data.y.values
+            print(f"  y: {y_vals[:5]}...{y_vals[-5:]} (first/last 5)")
+        print(f"Data has NaN values: {data.isnull().any().values}")
+
+        # Create figure
+        fig, ax = plt.subplots(figsize=figsize)
+
+        # Plot data with error handling
+        try:
+            im = data.plot(
+                ax=ax,
+                cmap=self.cmap,
+                add_colorbar=show_colorbar,
+                vmin=vmin,
+                vmax=vmax,
+            )
+            # Invert y-axis if needed for correct orientation
+            self._maybe_invert_yaxis(ax, data)
+        except Exception as e:
+            logger.error(f"Error plotting data with xarray.plot(): {e}")
+            print("Falling back to manual plotting method...")
+
+            # Fallback to manual plotting
+            # Use pcolormesh for better control
+            if hasattr(data, "x") and hasattr(data, "y"):
+                im = ax.pcolormesh(
+                    data.x, data.y, data.values, cmap=self.cmap, vmin=vmin, vmax=vmax
+                )
+            else:
+                # Use imshow as last resort
+                im = ax.imshow(
+                    data.values, cmap=self.cmap, vmin=vmin, vmax=vmax, origin="lower"
+                )
+
+            if show_colorbar:
+                plt.colorbar(im, ax=ax, shrink=0.8)
+
             self._maybe_invert_yaxis(ax, data)
 
         # Set title
         if title is None:
             time_str = pd.to_datetime(data.time.values).strftime("%Y-%m-%d")
-            title = f"{self.pollution_variable.replace('_', ' ').title()} - {time_str}"
+            var_title = self.pollution_variable.replace("_", " ").title()
+            title = f"{var_title} - {time_str}"
 
         ax.set_title(title, fontsize=14, fontweight="bold")
-
-        if not projection:
-            ax.set_xlabel("X Coordinate (m)", fontsize=12)
-            ax.set_ylabel("Y Coordinate (m)", fontsize=12)
+        ax.set_xlabel("X Coordinate (m)", fontsize=12)
+        ax.set_ylabel("Y Coordinate (m)", fontsize=12)
 
         plt.tight_layout()
 
@@ -163,28 +185,8 @@ class DataVisualizer:
         figsize: tuple[int, int] = (12, 6),
         title: str | None = None,
         save_path: str | Path | None = None,
-    ) -> plt.Figure:
-        """Create a time series plot.
-
-        Parameters
-        ----------
-        location : dict, optional
-            Location dictionary with 'x' and 'y' keys for point extraction
-        spatial_aggregation : str
-            Spatial aggregation method if no location specified
-        figsize : tuple
-            Figure size
-        title : str, optional
-            Plot title
-        save_path : str or Path, optional
-            Path to save the figure
-
-        Returns
-        -------
-        plt.Figure
-            The created figure
-
-        """
+    ) -> Figure:
+        """Create a time series plot."""
         # Get time series data
         if location:
             data = self.dataset[self.pollution_variable].sel(
@@ -198,6 +200,8 @@ class DataVisualizer:
                 data = self.dataset[self.pollution_variable].max(dim=["x", "y"])
             elif spatial_aggregation == "min":
                 data = self.dataset[self.pollution_variable].min(dim=["x", "y"])
+            else:
+                data = self.dataset[self.pollution_variable].mean(dim=["x", "y"])
             location_str = f"({spatial_aggregation} over domain)"
 
         # Create plot
@@ -212,13 +216,13 @@ class DataVisualizer:
 
         # Set labels and title
         if title is None:
-            title = f"{self.pollution_variable.replace('_', ' ').title()} Time Series {location_str}"
+            var_title = self.pollution_variable.replace("_", " ").title()
+            title = f"{var_title} Time Series {location_str}"
 
         ax.set_title(title, fontsize=14, fontweight="bold")
         ax.set_xlabel("Time", fontsize=12)
-        ax.set_ylabel(
-            f"{self.pollution_variable.replace('_', ' ').title()}", fontsize=12
-        )
+        var_label = self.pollution_variable.replace("_", " ").title()
+        ax.set_ylabel(var_label, fontsize=12)
         ax.grid(True, alpha=0.3)
 
         plt.tight_layout()
@@ -235,26 +239,8 @@ class DataVisualizer:
         figsize: tuple[int, int] = (10, 6),
         title: str | None = None,
         save_path: str | Path | None = None,
-    ) -> plt.Figure:
-        """Create a seasonal cycle plot.
-
-        Parameters
-        ----------
-        spatial_aggregation : str
-            Spatial aggregation method
-        figsize : tuple
-            Figure size
-        title : str, optional
-            Plot title
-        save_path : str or Path, optional
-            Path to save the figure
-
-        Returns
-        -------
-        plt.Figure
-            The created figure
-
-        """
+    ) -> Figure:
+        """Create a seasonal cycle plot."""
         # Aggregate spatially
         if spatial_aggregation == "mean":
             data = self.dataset[self.pollution_variable].mean(dim=["x", "y"])
@@ -262,6 +248,8 @@ class DataVisualizer:
             data = self.dataset[self.pollution_variable].max(dim=["x", "y"])
         elif spatial_aggregation == "min":
             data = self.dataset[self.pollution_variable].min(dim=["x", "y"])
+        else:
+            data = self.dataset[self.pollution_variable].mean(dim=["x", "y"])
 
         # Group by month
         monthly_data = data.groupby("time.month").mean()
@@ -287,9 +275,8 @@ class DataVisualizer:
 
         # Customize plot
         ax.set_xlabel("Month", fontsize=12)
-        ax.set_ylabel(
-            f"{self.pollution_variable.replace('_', ' ').title()}", fontsize=12
-        )
+        var_label = self.pollution_variable.replace("_", " ").title()
+        ax.set_ylabel(var_label, fontsize=12)
         ax.set_xticks(range(1, 13))
         ax.set_xticklabels(
             [
@@ -310,9 +297,8 @@ class DataVisualizer:
         ax.grid(True, alpha=0.3)
 
         if title is None:
-            title = (
-                f"Seasonal Cycle - {self.pollution_variable.replace('_', ' ').title()}"
-            )
+            var_title = self.pollution_variable.replace("_", " ").title()
+            title = f"Seasonal Cycle - {var_title}"
         ax.set_title(title, fontsize=14, fontweight="bold")
 
         plt.tight_layout()
@@ -331,30 +317,8 @@ class DataVisualizer:
         figsize: tuple[int, int] = (10, 6),
         title: str | None = None,
         save_path: str | Path | None = None,
-    ) -> plt.Figure:
-        """Create a distribution plot (histogram).
-
-        Parameters
-        ----------
-        time_subset : slice, optional
-            Time subset for analysis
-        spatial_subset : dict, optional
-            Spatial subset bounds
-        bins : int
-            Number of histogram bins
-        figsize : tuple
-            Figure size
-        title : str, optional
-            Plot title
-        save_path : str or Path, optional
-            Path to save the figure
-
-        Returns
-        -------
-        plt.Figure
-            The created figure
-
-        """
+    ) -> Figure:
+        """Create a distribution plot (histogram)."""
         data = self.dataset[self.pollution_variable]
 
         # Apply subsets
@@ -376,9 +340,8 @@ class DataVisualizer:
 
         # Histogram
         ax1.hist(values, bins=bins, alpha=0.7, edgecolor="black", color="steelblue")
-        ax1.set_xlabel(
-            f"{self.pollution_variable.replace('_', ' ').title()}", fontsize=12
-        )
+        var_label = self.pollution_variable.replace("_", " ").title()
+        ax1.set_xlabel(var_label, fontsize=12)
         ax1.set_ylabel("Frequency", fontsize=12)
         ax1.grid(True, alpha=0.3)
 
@@ -389,15 +352,12 @@ class DataVisualizer:
             patch_artist=True,
             boxprops=dict(facecolor="lightblue", alpha=0.7),
         )
-        ax2.set_ylabel(
-            f"{self.pollution_variable.replace('_', ' ').title()}", fontsize=12
-        )
+        ax2.set_ylabel(var_label, fontsize=12)
         ax2.grid(True, alpha=0.3)
 
         if title is None:
-            title = (
-                f"Distribution - {self.pollution_variable.replace('_', ' ').title()}"
-            )
+            var_title = self.pollution_variable.replace("_", " ").title()
+            title = f"Distribution - {var_title}"
         fig.suptitle(title, fontsize=14, fontweight="bold")
 
         plt.tight_layout()
@@ -414,26 +374,8 @@ class DataVisualizer:
         figsize: tuple[int, int] = (12, 8),
         title: str | None = None,
         save_path: str | Path | None = None,
-    ):
-        """Create a spatial map of temporal statistics.
-
-        Parameters
-        ----------
-        statistic : str
-            Temporal statistic to compute ('mean', 'max', 'min', 'std')
-        figsize : tuple
-            Figure size
-        title : str, optional
-            Plot title
-        save_path : str or Path, optional
-            Path to save the figure
-
-        Returns
-        -------
-        plt.Figure
-            The created figure
-
-        """
+    ) -> Figure:
+        """Create a spatial map of temporal statistics."""
         # Compute temporal statistic
         data = self.dataset[self.pollution_variable]
 
@@ -456,7 +398,8 @@ class DataVisualizer:
         self._maybe_invert_yaxis(ax, stat_data)
 
         if title is None:
-            title = f"Temporal {statistic.title()} - {self.pollution_variable.replace('_', ' ').title()}"
+            var_title = self.pollution_variable.replace("_", " ").title()
+            title = f"Temporal {statistic.title()} - {var_title}"
 
         ax.set_title(title, fontsize=14, fontweight="bold")
         ax.set_xlabel("X Coordinate (m)", fontsize=12)
@@ -479,32 +422,8 @@ class DataVisualizer:
         figsize: tuple[int, int] = (15, 5),
         title: str | None = None,
         save_path: str | Path | None = None,
-    ) -> plt.Figure:
-        """Create a comparison plot between two datasets.
-
-        Parameters
-        ----------
-        other_dataset : xr.Dataset
-            Second dataset for comparison
-        other_variable : str
-            Variable name in the second dataset
-        comparison_type : str
-            Type of comparison ('difference', 'ratio', 'side_by_side')
-        time_index : int or str
-            Time index or date string to plot
-        figsize : tuple
-            Figure size
-        title : str, optional
-            Plot title
-        save_path : str or Path, optional
-            Path to save the figure
-
-        Returns
-        -------
-        plt.Figure
-            The created figure
-
-        """
+    ) -> Figure:
+        """Create a comparison plot between two datasets."""
         # Select data for the specified time
         if isinstance(time_index, str):
             data1 = self.dataset[self.pollution_variable].sel(
@@ -538,6 +457,8 @@ class DataVisualizer:
                 ratio_data = data1 / data2
                 ratio_data.plot(ax=ax, cmap="RdYlBu_r", add_colorbar=True)
                 comparison_title = "Ratio (Dataset1 / Dataset2)"
+            else:
+                raise ValueError(f"Unsupported comparison type: {comparison_type}")
 
             ax.set_title(comparison_title, fontsize=12)
 
@@ -561,20 +482,7 @@ class DataVisualizer:
         fps: int = 5,
         dpi: int = 100,
     ) -> None:
-        """Create an animation of the spatial data over time.
-
-        Parameters
-        ----------
-        output_path : str or Path
-            Path for the output animation file
-        time_step : int
-            Time step interval for animation frames
-        fps : int
-            Frames per second
-        dpi : int
-            Resolution of the animation
-
-        """
+        """Create an animation of the spatial data over time."""
         try:
             from matplotlib.animation import FuncAnimation
 
@@ -596,8 +504,9 @@ class DataVisualizer:
                 )
 
                 time_str = pd.to_datetime(time_data.time.values).strftime("%Y-%m-%d")
+                var_title = self.pollution_variable.replace("_", " ").title()
                 ax.set_title(
-                    f"{self.pollution_variable.replace('_', ' ').title()} - {time_str}",
+                    f"{var_title} - {time_str}",
                     fontsize=14,
                     fontweight="bold",
                 )

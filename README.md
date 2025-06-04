@@ -402,6 +402,7 @@ See our [Issues](https://github.com/MuhammadShafeeque/dss-pollution-extraction/i
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
+  ***This is free software and comes with ABSOLUTELY NO WARRANTY***
 ## Authors and Acknowledgments
 
 **Main Developer:**
