@@ -1,5 +1,9 @@
 # DSS Pollution Extraction
 
+<p align="center">
+  <img src="docs/logo.png" alt="DSS Pollution Extraction Logo" width="300">
+</p>
+
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/Development%20Status-Beta-orange.svg)](https://pypi.org/project/dss-pollution-extraction/)
