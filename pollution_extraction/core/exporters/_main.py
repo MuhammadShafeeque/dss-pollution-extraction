@@ -28,6 +28,7 @@ class DataExporter(RasterExporter, SpatialExporter, TabularExporter):
             Output path for metadata file
         processing_info : dict, optional
             Additional processing information
+
         """
         output_path = Path(output_path)
 

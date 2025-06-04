@@ -37,6 +37,7 @@ class PollutionAnalyzer:
             Path to the NetCDF file
         pollution_type : str, optional
             Type of pollution data ('bc', 'no2', 'pm25', 'pm10')
+
         """
         self.file_path = Path(file_path)
         self.pollution_type = pollution_type
@@ -61,10 +62,11 @@ class PollutionAnalyzer:
     def get_info(self) -> dict:
         """Get comprehensive information about the dataset.
 
-        Returns:
+        Returns
         -------
         dict
             Dataset information including basic info and statistics
+
         """
         basic_info = self.reader.get_basic_info()
         data_summary = self.reader.get_data_summary()
@@ -129,10 +131,11 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Monthly aggregated data
+
         """
         return self.temporal_aggregator.monthly_aggregation(
             method=method, specific_months=months, years=years
@@ -150,10 +153,11 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Annual aggregated data
+
         """
         return self.temporal_aggregator.annual_aggregation(
             method=method, specific_years=years
@@ -176,10 +180,11 @@ class PollutionAnalyzer:
         method : str
             Aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Seasonal aggregated data
+
         """
         return self.temporal_aggregator.seasonal_aggregation(
             method=method, seasons=seasons, years=years
@@ -202,10 +207,11 @@ class PollutionAnalyzer:
         period_names : list of str, optional
             Names for each period
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Custom period aggregated data
+
         """
         return self.temporal_aggregator.custom_time_aggregation(
             time_periods=time_periods, method=method, period_names=period_names
@@ -226,10 +232,11 @@ class PollutionAnalyzer:
         method : str
             Extraction method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted point data
+
         """
         return self.spatial_extractor.extract_points(locations, method=method)
 
@@ -247,10 +254,11 @@ class PollutionAnalyzer:
         aggregation_method : str
             Spatial aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted polygon data
+
         """
         return self.spatial_extractor.extract_polygons(polygons, aggregation_method)
 
@@ -266,10 +274,11 @@ class PollutionAnalyzer:
         aggregation_method : str
             Spatial aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted NUTS3 data
+
         """
         return self.spatial_extractor.extract_nuts3_regions(
             nuts3_file, aggregation_method
@@ -295,10 +304,11 @@ class PollutionAnalyzer:
         aggregation_method : str
             Temporal aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted event-based data
+
         """
         return self.spatial_extractor.extract_with_dates(
             locations, date_column, days_before, aggregation_method
@@ -362,10 +372,11 @@ class PollutionAnalyzer:
         save_data : bool
             Whether to save processed data
 
-        Returns:
+        Returns
         -------
         dict
             Analysis results
+
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -430,10 +441,11 @@ class PollutionAnalyzer:
         export_formats : list of str
             Export formats for extracted data
 
-        Returns:
+        Returns
         -------
         dict
             Analysis results
+
         """
         if export_formats is None:
             export_formats = ["csv", "geojson"]
@@ -483,10 +495,11 @@ class PollutionAnalyzer:
         points_file : str or Path, optional
             Path to point locations file
 
-        Returns:
+        Returns
         -------
         dict
             Complete analysis results
+
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)

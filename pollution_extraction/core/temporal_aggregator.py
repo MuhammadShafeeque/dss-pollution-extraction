@@ -35,6 +35,7 @@ class TemporalAggregator:
             The pollution dataset
         pollution_variable : str
             Name of the pollution variable to aggregate
+
         """
         self.dataset = dataset
         self.pollution_variable = pollution_variable
@@ -78,10 +79,11 @@ class TemporalAggregator:
         method : str
             Aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Daily aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -112,10 +114,11 @@ class TemporalAggregator:
         years : list of int, optional
             Specific years to include
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Monthly aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -153,10 +156,11 @@ class TemporalAggregator:
         specific_years : list of int, optional
             Specific years to include
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Annual aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -193,10 +197,11 @@ class TemporalAggregator:
         years : list of int, optional
             Specific years to include
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Seasonal aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -245,10 +250,11 @@ class TemporalAggregator:
         period_names : list of str, optional
             Names for each period
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Custom period aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -296,10 +302,11 @@ class TemporalAggregator:
         min_periods : int, optional
             Minimum number of observations required
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Rolling aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -327,10 +334,11 @@ class TemporalAggregator:
         method : str
             Aggregation method
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Frequency-grouped aggregated dataset
+
         """
         self._validate_method(method)
 
@@ -352,10 +360,11 @@ class TemporalAggregator:
         days_before : int
             Number of days before the reference date
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Dataset for the specified period
+
         """
         ref_date = pd.to_datetime(reference_date)
         start_date = ref_date - pd.Timedelta(days=days_before)
@@ -375,10 +384,11 @@ class TemporalAggregator:
             - 'method': aggregation method
             - Additional parameters specific to each type
 
-        Returns:
+        Returns
         -------
         dict
             Dictionary of aggregated datasets keyed by period names
+
         """
         results = {}
 

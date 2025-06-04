@@ -53,6 +53,7 @@ class PollutionDataReader:
         pollution_type : str, optional
             Type of pollution data ('bc', 'no2', 'pm25', 'pm10')
             If None, will attempt to auto-detect
+
         """
         self.file_path = Path(file_path)
         self.pollution_type = pollution_type
@@ -76,10 +77,11 @@ class PollutionDataReader:
     def _detect_pollution_type(self) -> str:
         """Auto-detect pollution type based on variable names in the dataset.
 
-        Returns:
+        Returns
         -------
         str
             Detected pollution type
+
         """
         variables = list(self.dataset.data_vars)
 
@@ -135,10 +137,11 @@ class PollutionDataReader:
     def get_basic_info(self) -> dict:
         """Get basic information about the dataset.
 
-        Returns:
+        Returns
         -------
         dict
             Basic dataset information
+
         """
         start_time, end_time = self.time_range
 
@@ -158,10 +161,11 @@ class PollutionDataReader:
     def get_data_summary(self) -> dict:
         """Get statistical summary of the pollution data.
 
-        Returns:
+        Returns
         -------
         dict
             Statistical summary
+
         """
         data = self.data_variable
 
@@ -186,10 +190,11 @@ class PollutionDataReader:
         end_date : str
             End date in format 'YYYY-MM-DD'
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Dataset subset for the time range
+
         """
         return self.dataset.sel(time=slice(start_date, end_date))
 
@@ -201,10 +206,11 @@ class PollutionDataReader:
         dates : list of str
             List of dates in format 'YYYY-MM-DD'
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Dataset subset for the specified dates
+
         """
         date_objects = pd.to_datetime(dates)
         return self.dataset.sel(time=date_objects, method="nearest")

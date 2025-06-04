@@ -1,12 +1,6 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import xarray as xr
-import geopandas as gpd
-import shapely
-import rasterio
-import matplotlib.pyplot as plt
-import dask
-import netCDF4
 
 print("All imports successful!")
 

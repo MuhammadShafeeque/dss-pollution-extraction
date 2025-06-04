@@ -52,7 +52,7 @@ class Config:
     }
 
     # Season definitions
-    SEASONS: ClassVar[dict[str, dict[str, list[int]]]] = {
+    SEASONS: ClassVar[dict[str, dict[str, list[int] | str]]] = {
         "winter": {"months": [12, 1, 2], "name": "Winter (DJF)"},
         "spring": {"months": [3, 4, 5], "name": "Spring (MAM)"},
         "summer": {"months": [6, 7, 8], "name": "Summer (JJA)"},
@@ -177,7 +177,7 @@ class Config:
     }
 
     # Health guidelines and thresholds (WHO, EU standards)
-    HEALTH_GUIDELINES: ClassVar[dict[str, dict[str, float]]] = {
+    HEALTH_GUIDELINES: ClassVar[dict[str, dict[str, float | str]]] = {
         "no2": {
             "who_annual": 10.0,  # μg/m³
             "who_24h": 25.0,  # μg/m³
@@ -508,7 +508,7 @@ class UserConfig:
         return {k: v for k, v in issues.items() if v}
 
     def __str__(self):
-        """String representation of configuration."""
+        """Return string representation of configuration."""
         import json
 
         return json.dumps(self._config, indent=2)
@@ -603,4 +603,4 @@ def validate_export_format(format_name: str, config: UserConfig | None = None) -
     if config is None:
         config = global_config
 
-    return format_name in config.get("export_formats", {}).keys()
+    return format_name in config.get("export_formats").keys()

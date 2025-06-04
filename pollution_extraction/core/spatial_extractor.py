@@ -29,6 +29,7 @@ class SpatialExtractor:
             The pollution dataset with spatial coordinates
         pollution_variable : str
             Name of the pollution variable to extract
+
         """
         self.dataset = dataset
         self.pollution_variable = pollution_variable
@@ -63,10 +64,11 @@ class SpatialExtractor:
         format_type : str
             Format type ('shapefile', 'geojson', 'csv', 'auto')
 
-        Returns:
+        Returns
         -------
         gpd.GeoDataFrame
             Loaded spatial boundaries
+
         """
         file_path = Path(file_path)
 
@@ -181,10 +183,11 @@ class SpatialExtractor:
         buffer_distance : float, optional
             Buffer distance around points for aggregation
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted data at point locations
+
         """  # Handle different input types
         if isinstance(locations, str | Path):
             gdf = self.load_spatial_boundaries(locations)
@@ -281,10 +284,11 @@ class SpatialExtractor:
         mask_and_scale : bool
             Whether to mask areas outside polygons
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted data for each polygon
+
         """
         # Handle different input types
         if isinstance(polygons, str | Path):
@@ -380,10 +384,11 @@ class SpatialExtractor:
         aggregation_method : str
             Method for aggregating values within regions
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted data for each NUTS3 region
+
         """
         # Load NUTS3 boundaries
         nuts3_gdf = self.load_spatial_boundaries(nuts3_file)
@@ -423,10 +428,11 @@ class SpatialExtractor:
         aggregation_method : str
             Method for temporal aggregation if days_before > 0
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Extracted data for each location and date
+
         """
         # Load locations
         if isinstance(locations, str | Path):
@@ -497,10 +503,11 @@ class SpatialExtractor:
         bounds : dict
             Bounding box with keys 'minx', 'miny', 'maxx', 'maxy'
 
-        Returns:
+        Returns
         -------
         xr.Dataset
             Spatially subset dataset
+
         """
         return self.dataset.sel(
             x=slice(bounds["minx"], bounds["maxx"]),

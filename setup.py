@@ -4,7 +4,17 @@ import functools
 import operator
 from pathlib import Path
 
-from setuptools import find_packages, setup
+try:
+    # Attempt to import setuptools; if unavailable, print a helpful error and exit.
+    from setuptools import find_packages, setup
+except ImportError:
+    print(
+        "\nERROR: 'setuptools' is not installed in your environment.\n"
+        "Please install it by running:\n"
+        "    pip install setuptools\n"
+        "and then re-run this setup script.\n"
+    )
+    raise
 
 # Read the README file
 this_directory = Path(__file__).parent

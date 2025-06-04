@@ -52,6 +52,7 @@ class DataVisualizer:
             Name of the pollution variable to visualize
         pollution_type : str
             Type of pollution for color mapping
+
         """
         self.dataset = dataset
         self.pollution_variable = pollution_variable
@@ -98,10 +99,11 @@ class DataVisualizer:
         projection : cartopy projection, optional
             Map projection
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         # Select data for the specified time
         if isinstance(time_index, str):
@@ -177,10 +179,11 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         # Get time series data
         if location:
@@ -246,10 +249,11 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         # Aggregate spatially
         if spatial_aggregation == "mean":
@@ -345,10 +349,11 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         data = self.dataset[self.pollution_variable]
 
@@ -423,10 +428,11 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         # Compute temporal statistic
         data = self.dataset[self.pollution_variable]
@@ -493,10 +499,11 @@ class DataVisualizer:
         save_path : str or Path, optional
             Path to save the figure
 
-        Returns:
+        Returns
         -------
         plt.Figure
             The created figure
+
         """
         # Select data for the specified time
         if isinstance(time_index, str):
@@ -566,6 +573,7 @@ class DataVisualizer:
             Frames per second
         dpi : int
             Resolution of the animation
+
         """
         try:
             from matplotlib.animation import FuncAnimation

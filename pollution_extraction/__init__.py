@@ -68,10 +68,11 @@ def quick_analysis(file_path, pollution_type=None, output_dir="./output"):
     output_dir : str
         Output directory for results
 
-    Returns:
+    Returns
     -------
     PollutionAnalyzer
         Configured analyzer instance
+
     """
     analyzer = PollutionAnalyzer(file_path, pollution_type=pollution_type)
 
