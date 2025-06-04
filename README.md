@@ -395,16 +395,6 @@ The package is optimized for large datasets:
 - **Optimized I/O**: Compressed output formats
 - **Caching**: Intelligent caching of intermediate results
 
-### Benchmarks
-- **10GB NetCDF file**: ~5 minutes for annual aggregation
-- **50 monitoring stations**: <30 seconds for time series extraction
-- **NUTS3 regions (1,000+ polygons)**: ~2 minutes for spatial aggregation
-
-## Known Issues and Limitations
-
-- **Coordinate Systems**: Currently optimized for LAEA Europe projection
-- **Memory Usage**: Very large files (>20GB) may require chunking configuration
-- **Projection Support**: Limited support for non-European coordinate systems
 
 See our [Issues](https://github.com/MuhammadShafeeque/dss-pollution-extraction/issues) page for current bugs and feature requests.
 
@@ -417,7 +407,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 **Main Developer:**
 - **Muhammad Shafeeque** - *Lead Developer* - [Alfred Wegener Institute (AWI)](https://www.awi.de/)
   - Email: muhammad.shafeeque@awi.de
-  - Institution: Alfred Wegener Institute for Polar and Marine Research
+  - Institution: Data Science Support, Alfred Wegener Institute for Polar and Marine Research
 
 **Institution:**
 - **Alfred Wegener Institute (AWI)** - Helmholtz Centre for Polar and Marine Research
