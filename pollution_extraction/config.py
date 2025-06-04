@@ -212,6 +212,7 @@ class UserConfig:
         ----------
         config_file : str, optional
             Path to user configuration file
+
         """
         self.config_file = config_file
         self._config = {}
@@ -293,10 +294,11 @@ class UserConfig:
         default : any, optional
             Default value if key not found
 
-        Returns:
+        Returns
         -------
         any
             Configuration value
+
         """
         if section not in self._config:
             return default
@@ -317,6 +319,7 @@ class UserConfig:
             Configuration key
         value : any
             Configuration value
+
         """
         if section not in self._config:
             self._config[section] = {}
@@ -332,6 +335,7 @@ class UserConfig:
             Output file path
         format : str
             Output format ('json' or 'yaml')
+
         """
         import json
 
@@ -396,6 +400,7 @@ class UserConfig:
             Pollution type to update
         **kwargs
             Configuration parameters to update
+
         """
         if "pollution_variables" not in self._config:
             self._config["pollution_variables"] = {}
@@ -418,6 +423,7 @@ class UserConfig:
             List of month numbers (1-12)
         display_name : str, optional
             Display name for the season
+
         """
         if "seasons" not in self._config:
             self._config["seasons"] = {}
@@ -436,6 +442,7 @@ class UserConfig:
             Pollution type
         **thresholds
             Threshold values to update
+
         """
         if "health_guidelines" not in self._config:
             self._config["health_guidelines"] = {}
@@ -535,10 +542,11 @@ def load_config_from_file(config_file: str) -> UserConfig:
     config_file : str
         Path to configuration file
 
-    Returns:
+    Returns
     -------
     UserConfig
         Loaded configuration instance
+
     """
     return UserConfig(config_file)
 
@@ -552,6 +560,7 @@ def create_default_config_file(output_path: str, format: str = "yaml"):
         Output file path
     format : str
         Output format ('yaml' or 'json')
+
     """
     config = UserConfig()
     config.save(output_path, format=format)
@@ -561,10 +570,11 @@ def create_default_config_file(output_path: str, format: str = "yaml"):
 def get_config_template() -> dict:
     """Get a configuration template with all available options.
 
-    Returns:
+    Returns
     -------
     dict
         Configuration template
+
     """
     return UserConfig()._config
 

@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/Development%20Status-Beta-orange.svg)](https://pypi.org/project/dss-pollution-extraction/)
 
-A comprehensive Python package for analyzing pollution data from NetCDF files, developed at the Alfred Wegener Institute (AWI). This package provides tools for temporal aggregations, spatial extractions, visualizations, and health threshold analysis of atmospheric pollution data.
+A comprehensive Python package for analyzing pollution data from NetCDF files, developed at the Data Science Support (DSS), Alfred Wegener Institute (AWI). This package provides tools for temporal aggregations, spatial extractions, visualizations, and health threshold analysis of atmospheric pollution data.
 
 ## Features
 
@@ -434,16 +434,10 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 ## Roadmap
 
 ### Version 1.1 (Planned)
-- [ ] Additional coordinate system support
 - [ ] Real-time data processing
-- [ ] Machine learning integration
-- [ ] Performance optimizations
 
 ### Version 1.2 (Future)
-- [ ] Cloud processing support
-- [ ] Additional pollutant types
 - [ ] Web-based dashboard
-- [ ] API service
 
 ## Citation
 
