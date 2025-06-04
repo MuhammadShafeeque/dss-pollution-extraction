@@ -12,7 +12,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 project = "DSS Pollution Extraction"
 copyright = "2024, Muhammad Shafeeque"
 author = "Muhammad Shafeeque"
-release = "1.0.0"
+release = "1.0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

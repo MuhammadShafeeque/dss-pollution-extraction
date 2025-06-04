@@ -69,7 +69,7 @@ extras_require["all"] = list(
 
 setup(
     name="dss-pollution-extraction",
-    version="1.0.0",
+    version="1.0.1",
     author="Muhammad Shafeeque",
     author_email="muhammad.shafeeque@awi.de",
     maintainer="Muhammad Shafeeque",
